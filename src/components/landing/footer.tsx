@@ -1,17 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Activity } from "lucide-react"
+import { HostAILogo } from "@/components/icons/hostai-logo"
 
 interface FooterProps {
-  /** Brand name */
-  brandName?: string
   /** Main HostAI URL */
   hostaiUrl?: string
 }
 
 export function Footer({
-  brandName = "GetHost",
   hostaiUrl = "https://hostai.app"
 }: FooterProps) {
   return (
@@ -25,25 +22,9 @@ export function Footer({
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-[10px]"
-              style={{
-                background: "linear-gradient(90deg, #5753c6 0%, #ca244d 100%)",
-              }}
-            >
-              <Activity className="h-4 w-4 text-white" strokeWidth={1.5} />
-            </div>
-            <span
-              className="text-lg font-normal"
-              style={{
-                color: "#001821",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {brandName}
-            </span>
-          </div>
+          <Link href="/" className="transition-opacity hover:opacity-80">
+            <HostAILogo className="h-4 w-auto" color="#001821" />
+          </Link>
 
           {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">

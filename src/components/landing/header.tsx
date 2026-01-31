@@ -1,17 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Activity } from "lucide-react"
+import { HostAILogo } from "@/components/icons/hostai-logo"
 
 interface HeaderProps {
-  /** Brand name shown in header */
-  brandName?: string
   /** Link to main HostAI site */
   hostaiUrl?: string
 }
 
 export function Header({
-  brandName = "GetHost",
   hostaiUrl = "https://hostai.app"
 }: HeaderProps) {
   return (
@@ -21,19 +18,8 @@ export function Header({
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] transition-transform group-hover:scale-105"
-            style={{ background: "linear-gradient(90deg, #5753c6 0%, #ca244d 100%)" }}
-          >
-            <Activity className="h-5 w-5 text-white" strokeWidth={1.5} />
-          </div>
-          <span
-            className="text-xl font-normal tracking-tight"
-            style={{ color: "#001821", letterSpacing: "-0.01em" }}
-          >
-            {brandName}
-          </span>
+        <Link href="/" className="flex items-center gap-3 group transition-opacity hover:opacity-80">
+          <HostAILogo className="h-5 w-auto" color="#001821" />
         </Link>
 
         {/* Navigation */}

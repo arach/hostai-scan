@@ -670,6 +670,115 @@ function CurlCommand({ request }: { request: RequestInfo }) {
 }
 
 // ============================================================================
+// SEMrush CSV Parser - Parses raw CSV data on-the-fly
+// ============================================================================
+
+interface SEMrushRawResponse {
+  statusCode?: number;
+  body?: string;
+  domainRanks?: string;
+  backlinks?: string;
+  organicKeywords?: string;
+  refDomains?: string;
+}
+
+function parseSEMrushData(response: SEMrushRawResponse): SEMrushParsedData | null {
+  if (!response) return null;
+
+  const parseCSV = (csv: string): string[][] => {
+    if (!csv || typeof csv !== 'string') return [];
+    return csv.trim().split('\n').map(line => line.split(';'));
+  };
+
+  let domainRanks: SEMrushParsedData['domainRanks'] = null;
+  let backlinks: SEMrushParsedData['backlinks'] = null;
+  let topKeywords: SEMrushKeyword[] = [];
+  let refDomains: SEMrushRefDomain[] = [];
+
+  // Parse domain_ranks CSV
+  if (response.domainRanks) {
+    const rows = parseCSV(response.domainRanks);
+    if (rows.length >= 2) {
+      const data = rows[1]; // Second row is data
+      domainRanks = {
+        rank: parseInt(data[0]) || 0,
+        organicKeywords: parseInt(data[1]) || 0,
+        organicTraffic: parseInt(data[2]) || 0,
+        organicCost: parseFloat(data[3]) || 0,
+        adwordsKeywords: parseInt(data[4]) || 0,
+        adwordsTraffic: parseInt(data[5]) || 0,
+        adwordsCost: parseFloat(data[6]) || 0,
+      };
+    }
+  }
+
+  // Parse backlinks_overview CSV
+  if (response.backlinks) {
+    const rows = parseCSV(response.backlinks);
+    if (rows.length >= 2) {
+      const data = rows[1];
+      backlinks = {
+        authorityScore: parseInt(data[0]) || 0,
+        totalBacklinks: parseInt(data[1]) || 0,
+        referringDomains: parseInt(data[2]) || 0,
+        referringUrls: parseInt(data[3]) || 0,
+        referringIps: parseInt(data[4]) || 0,
+        followLinks: parseInt(data[5]) || 0,
+        nofollowLinks: parseInt(data[6]) || 0,
+      };
+    }
+  }
+
+  // Parse domain_organic (keywords) CSV
+  if (response.organicKeywords) {
+    const rows = parseCSV(response.organicKeywords);
+    if (rows.length >= 2) {
+      // Skip header row
+      for (let i = 1; i < rows.length; i++) {
+        const data = rows[i];
+        if (data.length >= 8) {
+          topKeywords.push({
+            keyword: data[0] || '',
+            position: parseInt(data[1]) || 0,
+            previousPosition: data[2] ? parseInt(data[2]) : null,
+            searchVolume: parseInt(data[3]) || 0,
+            cpc: parseFloat(data[4]) || 0,
+            url: data[5] || '',
+            traffic: parseFloat(data[6]) || 0,
+            trafficPercent: parseFloat(data[7]) || 0,
+          });
+        }
+      }
+    }
+  }
+
+  // Parse backlinks_refdomains CSV
+  if (response.refDomains) {
+    const rows = parseCSV(response.refDomains);
+    if (rows.length >= 2) {
+      for (let i = 1; i < rows.length; i++) {
+        const data = rows[i];
+        if (data.length >= 4) {
+          refDomains.push({
+            domain: data[0] || '',
+            backlinksCount: parseInt(data[1]) || 0,
+            firstSeen: data[2] || '',
+            lastSeen: data[3] || '',
+          });
+        }
+      }
+    }
+  }
+
+  // Return null if no data was parsed
+  if (!domainRanks && !backlinks && topKeywords.length === 0 && refDomains.length === 0) {
+    return null;
+  }
+
+  return { domainRanks, backlinks, topKeywords, refDomains };
+}
+
+// ============================================================================
 // Raw Data Tabs - Tabbed JSON Viewer
 // ============================================================================
 
@@ -812,13 +921,13 @@ function RawDataTabs({ rawApiData }: { rawApiData: RawApiData }) {
           <CurlCommand request={currentTab.request} />
         )}
 
-        {/* Response (JSON) */}
-        <JsonBlock data={currentTab?.response} maxHeight="max-h-[400px]" label="Response" />
-
-        {/* SEMrush Formatted View - special presentation layer */}
-        {activeTab === "semrush" && rawApiData.semrush?.parsed && (
-          <SEMrushFormattedView parsed={rawApiData.semrush.parsed} />
+        {currentTab?.response !== undefined && (
+          <JsonBlock data={currentTab.response} maxHeight="max-h-[400px]" label="Response" />
         )}
+
+        {activeTab === "semrush" && rawApiData.semrush?.response ? (
+          <SEMrushFormattedView response={rawApiData.semrush.response as SEMrushRawResponse} />
+        ) : null}
       </div>
     </div>
   );
@@ -828,7 +937,12 @@ function RawDataTabs({ rawApiData }: { rawApiData: RawApiData }) {
 // SEMrush Formatted View (for RawDataTabs)
 // ============================================================================
 
-function SEMrushFormattedView({ parsed }: { parsed: SEMrushParsedData }) {
+function SEMrushFormattedView({ response }: { response: SEMrushRawResponse }) {
+  // Parse on-the-fly
+  const parsed = useMemo(() => parseSEMrushData(response), [response]);
+
+  if (!parsed) return null;
+
   const { domainRanks, backlinks, topKeywords, refDomains } = parsed;
 
   const formatNum = (n: number) => {
@@ -1058,7 +1172,11 @@ function SEOMetricsComparison({ result }: { result: AuditResult }) {
 // ============================================================================
 
 function SEMrushDashboard({ rawApiData }: { rawApiData: RawApiData }) {
-  const semrushData = rawApiData.semrush?.parsed;
+  // Parse on-the-fly from raw response
+  const semrushData = useMemo(() => {
+    if (!rawApiData.semrush?.response) return null;
+    return parseSEMrushData(rawApiData.semrush.response as SEMrushRawResponse);
+  }, [rawApiData.semrush?.response]);
 
   if (!semrushData) return null;
 

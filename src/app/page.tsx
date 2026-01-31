@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Header, HeroSection, FeaturesSection, Footer } from "@/components/landing";
+import { Header, HeroSection, FeaturesSection, PartnersSection, Footer } from "@/components/landing";
 import { MultiPhaseScanner, useScannerProgress, DEFAULT_PHASES } from "@/components/scanner";
 import { ReportDashboard } from "@/components/report-dashboard";
 import type { AuditResult } from "@/types/audit";
@@ -158,6 +158,7 @@ export default function Home() {
           isLoading={false}
           error={error}
         />
+        <PartnersSection />
         <FeaturesSection />
         <Footer />
       </main>
