@@ -812,13 +812,13 @@ function RawDataTabs({ rawApiData }: { rawApiData: RawApiData }) {
           <CurlCommand request={currentTab.request} />
         )}
 
-        {/* SEMrush Formatted View */}
+        {/* Response (JSON) */}
+        <JsonBlock data={currentTab?.response} maxHeight="max-h-[400px]" label="Response" />
+
+        {/* SEMrush Formatted View - special presentation layer */}
         {activeTab === "semrush" && rawApiData.semrush?.parsed && (
           <SEMrushFormattedView parsed={rawApiData.semrush.parsed} />
         )}
-
-        {/* Response */}
-        <JsonBlock data={currentTab?.response} maxHeight="max-h-[400px]" label="Response" />
       </div>
     </div>
   );
