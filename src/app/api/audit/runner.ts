@@ -9,6 +9,59 @@ import {
   type TrustSignalAnalysis,
 } from "@/services/audit/checks/trust-signals";
 
+// Core Web Vitals extracted from either CrUX or Lighthouse
+interface CoreWebVitals {
+  LCP: { value: number; rating: string; source: "field" | "lab" };
+  FID: { value: number; rating: string; source: "field" | "lab" } | null;
+  CLS: { value: number; rating: string; source: "field" | "lab" };
+  FCP: { value: number; rating: string; source: "field" | "lab" };
+  TBT: { value: number; rating: string; source: "lab" } | null;
+}
+
+// Extract Core Web Vitals from PageSpeed data (CrUX first, Lighthouse fallback)
+function extractCoreWebVitals(data: PageSpeedResult | null): CoreWebVitals | null {
+  if (!data) return null;
+
+  const crux = data.loadingExperience?.metrics;
+  const audits = data.lighthouseResult?.audits;
+
+  // Helper to rate metrics
+  const rateLCP = (ms: number) => ms <= 2500 ? "good" : ms <= 4000 ? "needs-improvement" : "poor";
+  const rateFID = (ms: number) => ms <= 100 ? "good" : ms <= 300 ? "needs-improvement" : "poor";
+  const rateCLS = (score: number) => score <= 0.1 ? "good" : score <= 0.25 ? "needs-improvement" : "poor";
+  const rateFCP = (ms: number) => ms <= 1800 ? "good" : ms <= 3000 ? "needs-improvement" : "poor";
+  const rateTBT = (ms: number) => ms <= 200 ? "good" : ms <= 600 ? "needs-improvement" : "poor";
+
+  // Try CrUX (field data) first
+  if (crux?.LARGEST_CONTENTFUL_PAINT_MS) {
+    return {
+      LCP: { value: crux.LARGEST_CONTENTFUL_PAINT_MS.percentile, rating: crux.LARGEST_CONTENTFUL_PAINT_MS.category, source: "field" },
+      FID: crux.FIRST_INPUT_DELAY_MS ? { value: crux.FIRST_INPUT_DELAY_MS.percentile, rating: crux.FIRST_INPUT_DELAY_MS.category, source: "field" } : null,
+      CLS: { value: crux.CUMULATIVE_LAYOUT_SHIFT_SCORE?.percentile || 0, rating: crux.CUMULATIVE_LAYOUT_SHIFT_SCORE?.category || "good", source: "field" },
+      FCP: { value: crux.FIRST_CONTENTFUL_PAINT_MS?.percentile || 0, rating: crux.FIRST_CONTENTFUL_PAINT_MS?.category || "good", source: "field" },
+      TBT: null,
+    };
+  }
+
+  // Fallback to Lighthouse (lab data)
+  if (audits) {
+    const lcp = audits["largest-contentful-paint"]?.numericValue || 0;
+    const cls = audits["cumulative-layout-shift"]?.numericValue || 0;
+    const fcp = audits["first-contentful-paint"]?.numericValue || 0;
+    const tbt = audits["total-blocking-time"]?.numericValue || 0;
+
+    return {
+      LCP: { value: Math.round(lcp), rating: rateLCP(lcp), source: "lab" },
+      FID: null, // FID not available in lab data
+      CLS: { value: Number(cls.toFixed(3)), rating: rateCLS(cls), source: "lab" },
+      FCP: { value: Math.round(fcp), rating: rateFCP(fcp), source: "lab" },
+      TBT: { value: Math.round(tbt), rating: rateTBT(tbt), source: "lab" },
+    };
+  }
+
+  return null;
+}
+
 // PageSpeed Insights API types
 interface PageSpeedResult {
   lighthouseResult?: {
@@ -216,7 +269,7 @@ export async function runAudit(
     categories: scores.categories,
     recommendations: allRecommendations,
     competitors: [],
-    coreWebVitals: pageSpeedData?.loadingExperience?.metrics || null,
+    coreWebVitals: extractCoreWebVitals(pageSpeedData),
     lighthouseScores: pageSpeedData?.lighthouseResult?.categories || null,
     seoMetrics: seoData || null,
     dataForSEOMetrics: dataForSEOMetrics || null,
@@ -251,6 +304,7 @@ export async function runAudit(
       dataSourcesUsed: {
         htmlAnalysis: true,
         pageSpeed: !!pageSpeedData?.lighthouseResult,
+        coreWebVitals: !!extractCoreWebVitals(pageSpeedData),
         seoData: !!seoData,
         bookingFlowAnalysis: true,
         trustSignalAnalysis: true,
