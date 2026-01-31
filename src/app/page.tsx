@@ -168,18 +168,12 @@ export default function Home() {
   // Loading state - Multi-phase scanner
   if (status === "loading") {
     return (
-      <main
-        className="min-h-screen flex flex-col items-center justify-center px-4"
-        style={{ background: "#f9fafb" }}
-      >
+      <main className="min-h-screen flex flex-col items-center justify-center px-4 bg-background">
         <div className="mb-8 text-center">
-          <h2
-            className="text-2xl font-normal mb-2"
-            style={{ color: "#001821", letterSpacing: "-0.01em" }}
-          >
+          <h2 className="text-2xl font-normal mb-2 text-foreground tracking-tight">
             Analyzing {domain}
           </h2>
-          <p style={{ color: "#61686b" }}>
+          <p className="text-muted-foreground">
             {progress.currentStep || scannerProgress.progress.statusMessage}
           </p>
         </div>
@@ -192,8 +186,7 @@ export default function Home() {
 
         <button
           onClick={handleReset}
-          className="mt-8 text-sm transition-colors hover:opacity-70"
-          style={{ color: "#8b9498" }}
+          className="mt-8 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           Cancel
         </button>
@@ -201,25 +194,25 @@ export default function Home() {
     );
   }
 
-  // Complete state - Report dashboard
+  // Complete state - Report dashboard (dark theme)
   if (status === "complete" && result) {
-    return <ReportDashboard result={result} onReset={handleReset} />;
+    return (
+      <div className="dark">
+        <ReportDashboard result={result} onReset={handleReset} />
+      </div>
+    );
   }
 
   // Error state
   return (
-    <main
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: "#f9fafb" }}
-    >
+    <main className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <h2 className="text-2xl mb-4" style={{ color: "#64172b" }}>
+        <h2 className="text-2xl mb-4 text-error">
           Audit Failed
         </h2>
         <button
           onClick={handleReset}
-          className="underline"
-          style={{ color: "#001821" }}
+          className="underline text-foreground hover:text-muted-foreground transition-colors"
         >
           Try Again
         </button>

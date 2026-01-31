@@ -76,7 +76,7 @@ export function MultiPhaseScanner({
             key={p.id}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-500 ${
               i === currentPhase
-                ? "bg-foreground text-background scale-110"
+                ? "bg-accent text-white scale-110 shadow-lg shadow-accent/25"
                 : i < currentPhase
                   ? "bg-accent/20 text-accent"
                   : "bg-muted text-muted-foreground"
@@ -134,11 +134,11 @@ export function MultiPhaseScanner({
         <div className="border-t border-border bg-muted/30 px-6 py-3">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Overall Progress</span>
-            <span className="font-mono text-foreground">{overallProgress}%</span>
+            <span className="font-mono text-accent font-semibold">{overallProgress}%</span>
           </div>
           <div className="mt-2 h-1 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full bg-foreground rounded-full transition-all duration-500 ease-out"
+              className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
               style={{ width: `${overallProgress}%` }}
             />
           </div>
@@ -212,7 +212,7 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
   ], [])
 
   return (
-    <div className="relative h-64 rounded-lg bg-background/50 overflow-hidden border border-border/50 p-4">
+    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
       <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border/50">
         <Globe className="h-4 w-4 text-accent" />
         <span className="text-xs font-mono text-muted-foreground">domain-scanner</span>
@@ -228,12 +228,12 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
           return (
             <div
               key={item.name}
-              className={`flex items-center gap-2 py-1 px-2 rounded transition-all duration-300 ${
+              className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
                 !isVisible ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"
-              } ${isActive ? "bg-accent/10" : ""} ${isPulsing ? "bg-accent/20" : ""}`}
+              } ${isActive ? "bg-accent text-white shadow-sm" : ""} ${isPulsing ? "bg-accent/30" : ""}`}
               style={{ marginLeft: item.indent * 20, transitionDelay: `${i * 80}ms` }}
             >
-              <div className={`w-4 h-4 flex items-center justify-center ${isActive ? "text-accent" : "text-muted-foreground"}`}>
+              <div className={`w-4 h-4 flex items-center justify-center ${isActive ? "text-white" : "text-muted-foreground"}`}>
                 {item.icon === "folder" && <span className="text-xs">+</span>}
                 {item.icon === "search" && <span className="text-xs">@</span>}
                 {item.icon === "dns" && <span className="text-xs">#</span>}
@@ -241,13 +241,13 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
                 {item.icon === "clock" && <span className="text-xs">~</span>}
               </div>
               <span className={`text-xs transition-colors ${
-                item.type === "folder" ? "text-accent font-medium" : isActive ? "text-foreground" : "text-muted-foreground"
+                isActive ? "text-white font-medium" : item.type === "folder" ? "text-accent font-medium" : "text-muted-foreground"
               }`}>
                 {item.name}
               </span>
               {isVisible && (
                 <div className="ml-auto flex items-center gap-1">
-                  {isActive && <span className="text-[10px] text-accent animate-pulse">scanning...</span>}
+                  {isActive && <span className="text-[10px] text-white/80 animate-pulse">scanning...</span>}
                   {!isActive && i < visibleItems.length - 1 && <span className="text-[10px] text-accent/60">done</span>}
                 </div>
               )}
@@ -305,7 +305,7 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
   }, [progress, barConfig])
 
   return (
-    <div className="relative h-64 rounded-lg bg-background/50 overflow-hidden border border-border/50 p-4">
+    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
       <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
         <span>Resource</span>
         <div className="flex gap-8 pr-2">
@@ -392,7 +392,7 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
   const categories = ["On-Page", "Technical", "Content", "Off-Page"]
 
   return (
-    <div className="relative h-64 rounded-lg bg-background/50 overflow-hidden border border-border/50 p-4">
+    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
         <Search className="h-4 w-4 text-accent" />
         <span className="text-xs font-mono text-muted-foreground">seo-analyzer</span>
@@ -409,25 +409,27 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
             <div
               key={metric.name}
               className={`relative px-2 py-2 rounded-md border transition-all duration-300 ${
-                isActive
-                  ? "bg-accent/10 border-accent/40 text-accent"
-                  : isScanning
-                    ? "bg-muted/50 border-accent/30 text-muted-foreground"
+                isScanning
+                  ? "bg-accent text-white border-accent shadow-sm"
+                  : isActive
+                    ? "bg-accent/15 border-accent/40 text-accent"
                     : "bg-muted/20 border-border/30 text-muted-foreground/60"
               }`}
               style={{ transitionDelay: `${i * 30}ms` }}
             >
               <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full transition-colors ${
-                isActive
-                  ? category === 0 ? "bg-accent" : category === 1 ? "bg-warning" : category === 2 ? "bg-chart-2" : "bg-chart-3"
-                  : "bg-muted"
+                isScanning
+                  ? "bg-white"
+                  : isActive
+                    ? category === 0 ? "bg-accent" : category === 1 ? "bg-warning" : category === 2 ? "bg-chart-2" : "bg-chart-3"
+                    : "bg-muted"
               }`} />
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium truncate">{metric.name}</span>
+                <span className={`text-[10px] font-medium truncate ${isScanning ? "text-white" : ""}`}>{metric.name}</span>
               </div>
               <div className="mt-1 flex items-center gap-1">
-                {isActive && <span className="text-[8px] text-accent">complete</span>}
-                {isScanning && <span className="text-[8px] text-muted-foreground animate-pulse">scanning...</span>}
+                {isScanning && <span className="text-[8px] text-white/80 animate-pulse">scanning...</span>}
+                {isActive && !isScanning && <span className="text-[8px] text-accent">complete</span>}
                 {!isActive && !isScanning && <span className="text-[8px] text-muted-foreground/40">pending</span>}
               </div>
             </div>
@@ -480,7 +482,7 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
   }, [progress, highlights])
 
   return (
-    <div className="relative h-64 rounded-lg bg-background/50 overflow-hidden border border-border/50 p-4">
+    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
       <div className="flex items-center justify-center gap-6 h-full">
         {/* Desktop frame */}
         <div className="relative w-48 h-32 rounded-lg border-2 border-border bg-card overflow-hidden">
@@ -627,16 +629,24 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
               const isComplete = score === rubric.target
 
               return (
-                <div key={rubric.id} className={`flex items-center gap-2 py-1 px-1.5 rounded transition-colors ${isActive ? "bg-muted/50" : ""}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isComplete ? getBarColor(score) : isActive ? "bg-accent animate-pulse" : "bg-muted"}`} />
-                  <span className={`text-[10px] w-20 truncate ${isComplete ? "text-foreground" : "text-muted-foreground"}`}>{rubric.label}</span>
-                  <div className="flex-1 h-1.5 bg-muted/50 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all duration-300 ${getBarColor(score)}`} style={{ width: `${score}%` }} />
+                <div key={rubric.id} className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all ${
+                  isActive && !isComplete ? "bg-accent text-white shadow-sm" : ""
+                }`}>
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    isActive && !isComplete ? "bg-white" : isComplete ? getBarColor(score) : "bg-muted"
+                  }`} />
+                  <span className={`text-[10px] w-20 truncate ${
+                    isActive && !isComplete ? "text-white font-medium" : isComplete ? "text-foreground" : "text-muted-foreground"
+                  }`}>{rubric.label}</span>
+                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${isActive && !isComplete ? "bg-white/30" : "bg-muted/50"}`}>
+                    <div className={`h-full rounded-full transition-all duration-300 ${isActive && !isComplete ? "bg-white" : getBarColor(score)}`} style={{ width: `${score}%` }} />
                   </div>
-                  <span className={`text-[10px] font-mono font-medium w-6 text-right tabular-nums ${score > 0 ? getScoreColor(score) : "text-muted-foreground/40"}`}>
+                  <span className={`text-[10px] font-mono font-medium w-6 text-right tabular-nums ${
+                    isActive && !isComplete ? "text-white" : score > 0 ? getScoreColor(score) : "text-muted-foreground/40"
+                  }`}>
                     {score > 0 ? score : "—"}
                   </span>
-                  <span className="text-[8px] text-muted-foreground/50 w-6 text-right">{rubric.weight}%</span>
+                  <span className={`text-[8px] w-6 text-right ${isActive && !isComplete ? "text-white/70" : "text-muted-foreground/50"}`}>{rubric.weight}%</span>
                 </div>
               )
             })}

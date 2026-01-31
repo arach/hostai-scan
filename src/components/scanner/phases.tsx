@@ -1,100 +1,30 @@
 import { Globe, Zap, Search, Eye, Calculator } from "lucide-react"
 import type { AuditPhase } from "./types"
+import scannerConfig from "@/config/scanner-phases.json"
+
+/**
+ * Phase metadata - icons, colors, weights (can't be stored in JSON)
+ */
+const PHASE_META: Record<string, { icon: React.ReactNode; color: string; weight: number }> = {
+  domain: { icon: <Globe className="h-5 w-5" />, color: "accent", weight: 15 },
+  performance: { icon: <Zap className="h-5 w-5" />, color: "warning", weight: 25 },
+  seo: { icon: <Search className="h-5 w-5" />, color: "accent", weight: 20 },
+  ui: { icon: <Eye className="h-5 w-5" />, color: "destructive", weight: 25 },
+  scoring: { icon: <Calculator className="h-5 w-5" />, color: "accent", weight: 15 },
+}
 
 /**
  * Default audit phases for the GetHost.AI scanner
- * Each phase represents ~20% of the total scan time by default
+ * Items are loaded from src/config/scanner-phases.json (editable via /dev/scanner)
+ * Icons and weights are defined in code above
  */
-export const DEFAULT_PHASES: AuditPhase[] = [
-  {
-    id: "domain",
-    name: "Domain Discovery",
-    description: "Analyzing domain & web presence",
-    icon: <Globe className="h-5 w-5" />,
-    color: "accent",
-    weight: 15,
-    items: [
-      "whois-lookup.ts",
-      "dns-records.json",
-      "ssl-certificate.ts",
-      "domain-history.tsx",
-      "web-archive.ts",
-      "social-profiles.json",
-    ],
-  },
-  {
-    id: "performance",
-    name: "Performance Audit",
-    description: "Evaluating speed & Core Web Vitals",
-    icon: <Zap className="h-5 w-5" />,
-    color: "warning",
-    weight: 25,
-    items: [
-      "lighthouse-core.ts",
-      "pagespeed-api.json",
-      "dom-analysis.tsx",
-      "resource-timing.ts",
-      "core-web-vitals.ts",
-      "network-waterfall.json",
-      "render-blocking.ts",
-      "image-optimization.tsx",
-    ],
-  },
-  {
-    id: "seo",
-    name: "SEO Analysis",
-    description: "Scanning search optimization metrics",
-    icon: <Search className="h-5 w-5" />,
-    color: "accent",
-    weight: 20,
-    items: [
-      "meta-tags.ts",
-      "schema-markup.json",
-      "sitemap-parser.tsx",
-      "robots-txt.ts",
-      "backlink-analysis.ts",
-      "keyword-density.json",
-      "canonical-urls.ts",
-      "heading-structure.tsx",
-      "alt-text-audit.ts",
-    ],
-  },
-  {
-    id: "ui",
-    name: "Conversion Audit",
-    description: "Assessing booking flow & trust signals",
-    icon: <Eye className="h-5 w-5" />,
-    color: "destructive",
-    weight: 25,
-    items: [
-      "mobile-responsive.ts",
-      "accessibility-a11y.json",
-      "color-contrast.tsx",
-      "touch-targets.ts",
-      "visual-hierarchy.ts",
-      "booking-flow.json",
-      "trust-signals.tsx",
-      "cta-placement.ts",
-    ],
-  },
-  {
-    id: "scoring",
-    name: "Calculating Scores",
-    description: "Computing final audit results",
-    icon: <Calculator className="h-5 w-5" />,
-    color: "accent",
-    weight: 15,
-    items: [
-      "performance-score.ts",
-      "seo-score.ts",
-      "conversion-score.ts",
-      "trust-score.ts",
-      "content-score.ts",
-      "security-score.ts",
-      "overall-weighted-score.ts",
-    ],
-  },
-]
+export const DEFAULT_PHASES: AuditPhase[] = scannerConfig.phases.map(phase => ({
+  id: phase.id,
+  name: phase.name,
+  description: phase.description,
+  items: phase.items,
+  ...PHASE_META[phase.id],
+}))
 
 /** Get phase by ID */
 export function getPhase(id: string): AuditPhase | undefined {
