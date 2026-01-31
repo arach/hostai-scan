@@ -538,7 +538,7 @@ async function fetchSEMrushWithRaw(
   organicUrl.searchParams.set("database", "us");
   organicUrl.searchParams.set("display_limit", "20");
   organicUrl.searchParams.set("display_sort", "tr_desc"); // Sort by traffic descending
-  organicUrl.searchParams.set("export_columns", "Ph,Po,Pp,Nq,Tr,Tc,Ur"); // Keyword, Position, Previous Position, Volume, Traffic, Traffic%, URL
+  organicUrl.searchParams.set("export_columns", "Ph,Po,Pp,Nq,Cp,Tr,Tc,Ur"); // Keyword, Position, Previous Position, Volume, CPC, Traffic%, TrafficCost, URL
 
   // 4. Backlinks Referring Domains - top 20 referring domains
   const refDomainsUrl = new URL("https://api.semrush.com/analytics/v1/");
@@ -547,7 +547,7 @@ async function fetchSEMrushWithRaw(
   refDomainsUrl.searchParams.set("target", domain);
   refDomainsUrl.searchParams.set("target_type", "root_domain");
   refDomainsUrl.searchParams.set("display_limit", "20");
-  refDomainsUrl.searchParams.set("display_sort", "backlinks_desc");
+  refDomainsUrl.searchParams.set("display_sort", "backlinks_num");
   refDomainsUrl.searchParams.set("export_columns", "domain_ascore,domain,backlinks_num,first_seen,last_seen");
 
   const requestInfo: RequestInfo = {
@@ -576,13 +576,13 @@ async function fetchSEMrushWithRaw(
       statusCode: ranksResponse.status,
       domainRanks: ranksText,
       backlinks: backlinksText,
-      domainOrganic: organicText,
+      organicKeywords: organicText,  // Changed from domainOrganic to match parser
       refDomains: refDomainsText,
       fetchedAt: new Date().toISOString(),
       urls: {
         domainRanks: ranksUrl.toString().replace(apiKey, "***"),
         backlinks: backlinksUrl.toString().replace(apiKey, "***"),
-        domainOrganic: organicUrl.toString().replace(apiKey, "***"),
+        organicKeywords: organicUrl.toString().replace(apiKey, "***"),
         refDomains: refDomainsUrl.toString().replace(apiKey, "***"),
       },
     };

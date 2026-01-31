@@ -696,18 +696,19 @@ function parseSEMrushData(response: SEMrushRawResponse): SEMrushParsedData | nul
   let refDomains: SEMrushRefDomain[] = [];
 
   // Parse domain_ranks CSV
+  // Columns: Database;Domain;Rank;Organic Keywords;Organic Traffic;Organic Cost;Adwords Keywords;Adwords Traffic;Adwords Cost
   if (response.domainRanks) {
     const rows = parseCSV(response.domainRanks);
     if (rows.length >= 2) {
       const data = rows[1]; // Second row is data
       domainRanks = {
-        rank: parseInt(data[0]) || 0,
-        organicKeywords: parseInt(data[1]) || 0,
-        organicTraffic: parseInt(data[2]) || 0,
-        organicCost: parseFloat(data[3]) || 0,
-        adwordsKeywords: parseInt(data[4]) || 0,
-        adwordsTraffic: parseInt(data[5]) || 0,
-        adwordsCost: parseFloat(data[6]) || 0,
+        rank: parseInt(data[2]) || 0,           // Column 2: Rank
+        organicKeywords: parseInt(data[3]) || 0, // Column 3: Organic Keywords
+        organicTraffic: parseInt(data[4]) || 0,  // Column 4: Organic Traffic
+        organicCost: parseFloat(data[5]) || 0,   // Column 5: Organic Cost
+        adwordsKeywords: parseInt(data[6]) || 0, // Column 6: Adwords Keywords
+        adwordsTraffic: parseInt(data[7]) || 0,  // Column 7: Adwords Traffic
+        adwordsCost: parseFloat(data[8]) || 0,   // Column 8: Adwords Cost
       };
     }
   }
@@ -730,22 +731,23 @@ function parseSEMrushData(response: SEMrushRawResponse): SEMrushParsedData | nul
   }
 
   // Parse domain_organic (keywords) CSV
+  // Columns: Keyword;Position;Previous Position;Search Volume;CPC;Traffic (%);Traffic Cost;URL
   if (response.organicKeywords) {
     const rows = parseCSV(response.organicKeywords);
     if (rows.length >= 2) {
       // Skip header row
       for (let i = 1; i < rows.length; i++) {
         const data = rows[i];
-        if (data.length >= 8) {
+        if (data.length >= 7) {  // Need at least 7 columns
           topKeywords.push({
             keyword: data[0] || '',
             position: parseInt(data[1]) || 0,
             previousPosition: data[2] ? parseInt(data[2]) : null,
             searchVolume: parseInt(data[3]) || 0,
-            cpc: parseFloat(data[4]) || 0,
-            url: data[5] || '',
-            traffic: parseFloat(data[6]) || 0,
-            trafficPercent: parseFloat(data[7]) || 0,
+            cpc: parseFloat(data[4]) || 0,           // Column 4: CPC
+            trafficPercent: parseFloat(data[5]) || 0, // Column 5: Traffic %
+            traffic: parseFloat(data[6]) || 0,        // Column 6: Traffic Cost (estimated value)
+            url: data[7] || '',                       // Column 7: URL
           });
         }
       }
