@@ -1,8 +1,34 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { db } from "./db";
 
-// Store audits in a data directory
-const AUDITS_DIR = path.join(process.cwd(), "data", "audits");
+// Track if schema has been initialized
+let schemaInitialized = false;
+
+async function ensureSchema() {
+  if (schemaInitialized) return;
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS audits (
+      id TEXT PRIMARY KEY,
+      domain TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'completed',
+      created_at TEXT NOT NULL,
+      completed_at TEXT,
+      result TEXT,
+      error TEXT
+    )
+  `);
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_audits_domain ON audits(domain)
+  `);
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_audits_created ON audits(created_at DESC)
+  `);
+
+  schemaInitialized = true;
+  console.log("Turso schema initialized");
+}
 
 export interface StoredAudit {
   id: string;
@@ -12,15 +38,6 @@ export interface StoredAudit {
   result: unknown;
 }
 
-// Ensure the audits directory exists
-async function ensureDir() {
-  try {
-    await fs.mkdir(AUDITS_DIR, { recursive: true });
-  } catch {
-    // Directory likely exists
-  }
-}
-
 // Generate a slug-friendly ID from domain
 function generateAuditId(domain: string): string {
   const slug = domain.replace(/[^a-z0-9]/gi, "-").toLowerCase();
@@ -28,38 +45,45 @@ function generateAuditId(domain: string): string {
   return `${slug}-${timestamp}`;
 }
 
-// Save an audit result to JSON file
+// Save an audit result
 export async function saveAudit(
   domain: string,
   result: unknown
 ): Promise<string> {
-  await ensureDir();
-
+  await ensureSchema();
   const id = generateAuditId(domain);
-  const audit: StoredAudit = {
-    id,
-    domain,
-    createdAt: new Date().toISOString(),
-    completedAt: new Date().toISOString(),
-    result,
-  };
+  const now = new Date().toISOString();
 
-  const filePath = path.join(AUDITS_DIR, `${id}.json`);
-  await fs.writeFile(filePath, JSON.stringify(audit, null, 2), "utf-8");
+  await db.execute({
+    sql: `INSERT INTO audits (id, domain, status, created_at, completed_at, result)
+          VALUES (?, ?, 'completed', ?, ?, ?)`,
+    args: [id, domain, now, now, JSON.stringify(result)],
+  });
 
-  console.log(`Audit saved: ${filePath}`);
+  console.log(`Audit saved to Turso: ${id}`);
   return id;
 }
 
 // Load an audit by ID
 export async function loadAudit(id: string): Promise<StoredAudit | null> {
-  try {
-    const filePath = path.join(AUDITS_DIR, `${id}.json`);
-    const content = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(content) as StoredAudit;
-  } catch {
+  await ensureSchema();
+  const result = await db.execute({
+    sql: `SELECT id, domain, created_at, completed_at, result FROM audits WHERE id = ?`,
+    args: [id],
+  });
+
+  if (result.rows.length === 0) {
     return null;
   }
+
+  const row = result.rows[0];
+  return {
+    id: row.id as string,
+    domain: row.domain as string,
+    createdAt: row.created_at as string,
+    completedAt: row.completed_at as string,
+    result: JSON.parse(row.result as string),
+  };
 }
 
 // List recent audits for a domain
@@ -67,77 +91,41 @@ export async function listAuditsForDomain(
   domain: string,
   limit = 10
 ): Promise<StoredAudit[]> {
-  await ensureDir();
+  await ensureSchema();
+  const result = await db.execute({
+    sql: `SELECT id, domain, created_at, completed_at, result
+          FROM audits
+          WHERE domain = ?
+          ORDER BY created_at DESC
+          LIMIT ?`,
+    args: [domain, limit],
+  });
 
-  try {
-    const files = await fs.readdir(AUDITS_DIR);
-    const slug = domain.replace(/[^a-z0-9]/gi, "-").toLowerCase();
-
-    // Filter files that match the domain
-    const matchingFiles = files
-      .filter((f) => f.startsWith(slug) && f.endsWith(".json"))
-      .sort()
-      .reverse()
-      .slice(0, limit);
-
-    const audits: StoredAudit[] = [];
-    for (const file of matchingFiles) {
-      try {
-        const content = await fs.readFile(
-          path.join(AUDITS_DIR, file),
-          "utf-8"
-        );
-        audits.push(JSON.parse(content));
-      } catch {
-        // Skip corrupted files
-      }
-    }
-
-    return audits;
-  } catch {
-    return [];
-  }
+  return result.rows.map((row) => ({
+    id: row.id as string,
+    domain: row.domain as string,
+    createdAt: row.created_at as string,
+    completedAt: row.completed_at as string,
+    result: JSON.parse(row.result as string),
+  }));
 }
 
 // List all recent audits
 export async function listRecentAudits(limit = 20): Promise<StoredAudit[]> {
-  await ensureDir();
+  await ensureSchema();
+  const result = await db.execute({
+    sql: `SELECT id, domain, created_at, completed_at, result
+          FROM audits
+          ORDER BY created_at DESC
+          LIMIT ?`,
+    args: [limit],
+  });
 
-  try {
-    const files = await fs.readdir(AUDITS_DIR);
-
-    // Get file stats for sorting by modification time
-    const fileStats = await Promise.all(
-      files
-        .filter((f) => f.endsWith(".json"))
-        .map(async (f) => {
-          const filePath = path.join(AUDITS_DIR, f);
-          const stat = await fs.stat(filePath);
-          return { file: f, mtime: stat.mtime };
-        })
-    );
-
-    // Sort by modification time, newest first
-    const sortedFiles = fileStats
-      .sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
-      .slice(0, limit)
-      .map((f) => f.file);
-
-    const audits: StoredAudit[] = [];
-    for (const file of sortedFiles) {
-      try {
-        const content = await fs.readFile(
-          path.join(AUDITS_DIR, file),
-          "utf-8"
-        );
-        audits.push(JSON.parse(content));
-      } catch {
-        // Skip corrupted files
-      }
-    }
-
-    return audits;
-  } catch {
-    return [];
-  }
+  return result.rows.map((row) => ({
+    id: row.id as string,
+    domain: row.domain as string,
+    createdAt: row.created_at as string,
+    completedAt: row.completed_at as string,
+    result: JSON.parse(row.result as string),
+  }));
 }
