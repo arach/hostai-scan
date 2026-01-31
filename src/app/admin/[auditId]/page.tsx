@@ -812,9 +812,179 @@ function RawDataTabs({ rawApiData }: { rawApiData: RawApiData }) {
           <CurlCommand request={currentTab.request} />
         )}
 
+        {/* SEMrush Formatted View */}
+        {activeTab === "semrush" && rawApiData.semrush?.parsed && (
+          <SEMrushFormattedView parsed={rawApiData.semrush.parsed} />
+        )}
+
         {/* Response */}
         <JsonBlock data={currentTab?.response} maxHeight="max-h-[400px]" label="Response" />
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SEMrush Formatted View (for RawDataTabs)
+// ============================================================================
+
+function SEMrushFormattedView({ parsed }: { parsed: SEMrushParsedData }) {
+  const { domainRanks, backlinks, topKeywords, refDomains } = parsed;
+
+  const formatNum = (n: number) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return n.toLocaleString();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+          <Activity className="size-4 text-primary" />
+          Formatted SEMrush Data
+        </h3>
+        <Badge variant="secondary" className="text-[10px]">Parsed from CSV</Badge>
+      </div>
+
+      {/* Domain Overview */}
+      {(domainRanks || backlinks) && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          {domainRanks && (
+            <>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Domain Rank</div>
+                <div className="text-lg font-mono font-bold">#{formatNum(domainRanks.rank)}</div>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Organic KWs</div>
+                <div className="text-lg font-mono font-bold text-success">{formatNum(domainRanks.organicKeywords)}</div>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Organic Traffic</div>
+                <div className="text-lg font-mono font-bold">{formatNum(domainRanks.organicTraffic)}</div>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Traffic Value</div>
+                <div className="text-lg font-mono font-bold text-warning">${formatNum(domainRanks.organicCost)}</div>
+              </div>
+            </>
+          )}
+          {backlinks && (
+            <>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Authority</div>
+                <div className="text-lg font-mono font-bold text-primary">{backlinks.authorityScore}</div>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Backlinks</div>
+                <div className="text-lg font-mono font-bold">{formatNum(backlinks.totalBacklinks)}</div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Top Keywords Table */}
+      {topKeywords.length > 0 && (
+        <div className="bg-muted/20 rounded-lg border border-border/30 overflow-hidden">
+          <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between bg-muted/30">
+            <span className="text-xs font-medium">Top Keywords</span>
+            <Badge variant="secondary" className="text-[10px]">{topKeywords.length}</Badge>
+          </div>
+          <div className="overflow-x-auto max-h-[200px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/20 sticky top-0">
+                <tr className="text-muted-foreground">
+                  <th className="text-left px-3 py-1.5 font-medium">Keyword</th>
+                  <th className="text-center px-2 py-1.5 font-medium">Pos</th>
+                  <th className="text-right px-2 py-1.5 font-medium">Volume</th>
+                  <th className="text-right px-2 py-1.5 font-medium">Traffic</th>
+                  <th className="text-right px-3 py-1.5 font-medium">CPC</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/20">
+                {topKeywords.slice(0, 10).map((kw, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-3 py-1.5 font-medium truncate max-w-[150px]" title={kw.keyword}>{kw.keyword}</td>
+                    <td className="text-center px-2 py-1.5">
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                        kw.position <= 3 ? "bg-success/20 text-success" :
+                        kw.position <= 10 ? "bg-warning/20 text-warning" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {kw.position}
+                      </span>
+                    </td>
+                    <td className="text-right px-2 py-1.5 font-mono text-muted-foreground">{formatNum(kw.searchVolume)}</td>
+                    <td className="text-right px-2 py-1.5 font-mono">{kw.traffic.toFixed(0)}</td>
+                    <td className="text-right px-3 py-1.5 font-mono text-muted-foreground">${kw.cpc.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Referring Domains */}
+      {refDomains.length > 0 && (
+        <div className="bg-muted/20 rounded-lg border border-border/30 overflow-hidden">
+          <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between bg-muted/30">
+            <span className="text-xs font-medium">Top Referring Domains</span>
+            <Badge variant="secondary" className="text-[10px]">{refDomains.length}</Badge>
+          </div>
+          <div className="overflow-x-auto max-h-[150px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/20 sticky top-0">
+                <tr className="text-muted-foreground">
+                  <th className="text-left px-3 py-1.5 font-medium">Domain</th>
+                  <th className="text-right px-2 py-1.5 font-medium">Backlinks</th>
+                  <th className="text-right px-3 py-1.5 font-medium">First Seen</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/20">
+                {refDomains.slice(0, 10).map((rd, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-3 py-1.5 font-medium">{rd.domain}</td>
+                    <td className="text-right px-2 py-1.5 font-mono">{formatNum(rd.backlinksCount)}</td>
+                    <td className="text-right px-3 py-1.5 text-muted-foreground">{rd.firstSeen}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Backlink Breakdown */}
+      {backlinks && (
+        <div className="bg-muted/20 rounded-lg border border-border/30 p-3">
+          <div className="text-xs font-medium mb-2">Backlink Profile</div>
+          <div className="grid grid-cols-5 gap-2 text-center">
+            <div>
+              <div className="text-sm font-mono font-bold">{formatNum(backlinks.referringDomains)}</div>
+              <div className="text-[10px] text-muted-foreground">Ref Domains</div>
+            </div>
+            <div>
+              <div className="text-sm font-mono font-bold">{formatNum(backlinks.referringUrls)}</div>
+              <div className="text-[10px] text-muted-foreground">Ref URLs</div>
+            </div>
+            <div>
+              <div className="text-sm font-mono font-bold">{formatNum(backlinks.referringIps)}</div>
+              <div className="text-[10px] text-muted-foreground">Ref IPs</div>
+            </div>
+            <div>
+              <div className="text-sm font-mono font-bold text-success">{formatNum(backlinks.followLinks)}</div>
+              <div className="text-[10px] text-muted-foreground">Follow</div>
+            </div>
+            <div>
+              <div className="text-sm font-mono font-bold text-muted-foreground">{formatNum(backlinks.nofollowLinks)}</div>
+              <div className="text-[10px] text-muted-foreground">Nofollow</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
