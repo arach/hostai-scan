@@ -15,6 +15,8 @@ interface UseScannerProgressOptions {
   onComplete?: () => void
   /** Update interval in ms (default: 100) */
   updateInterval?: number
+  /** Hold time at 100% before transitioning to next phase, in ms (default: 800) */
+  phaseHoldMs?: number
 }
 
 export function useScannerProgress({
@@ -23,6 +25,7 @@ export function useScannerProgress({
   autoStart = false,
   onComplete,
   updateInterval = 100,
+  phaseHoldMs = 800,
 }: UseScannerProgressOptions) {
   const [isRunning, setIsRunning] = useState(autoStart)
   const [progress, setProgress] = useState<ScannerProgress>({
@@ -37,9 +40,6 @@ export function useScannerProgress({
   const phaseTimings = getPhaseTimings(phases, totalDuration)
 
   // Calculate progress based on elapsed time
-  // Each phase reserves 15% of its duration as a "hold" period at 100%
-  const HOLD_RATIO = 0.15
-
   const updateProgress = useCallback(() => {
     if (!startTimeRef.current) return
 
@@ -55,9 +55,9 @@ export function useScannerProgress({
       if (elapsed >= timing.startMs && elapsed < timing.endMs) {
         currentPhaseIndex = i
 
-        // Calculate progress with hold period
+        // Calculate progress with hold period at the end
         const phaseElapsed = elapsed - timing.startMs
-        const workDuration = timing.durationMs * (1 - HOLD_RATIO) // Time for 0-100%
+        const workDuration = timing.durationMs - phaseHoldMs // Time for 0-100%
         const holdStart = workDuration // When hold begins
 
         if (phaseElapsed >= holdStart) {
@@ -88,7 +88,7 @@ export function useScannerProgress({
       setIsRunning(false)
       onComplete?.()
     }
-  }, [phases, phaseTimings, totalDuration, onComplete])
+  }, [phases, phaseTimings, totalDuration, onComplete, phaseHoldMs])
 
   // Run the timer
   useEffect(() => {

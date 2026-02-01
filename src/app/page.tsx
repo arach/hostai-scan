@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Header, HeroSection, FeaturesSection, PartnersSection, Footer } from "@/components/landing";
 import { MultiPhaseScanner, useScannerProgress, DEFAULT_PHASES } from "@/components/scanner";
 import { ReportDashboard } from "@/components/report-dashboard";

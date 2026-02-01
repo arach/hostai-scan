@@ -223,103 +223,104 @@ function PhaseAnimation({ phase, progress }: { phase: AuditPhase; progress: numb
 // ============================================================================
 
 function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: number }) {
-  const [visibleItems, setVisibleItems] = useState<number[]>([])
-  const [activeItem, setActiveItem] = useState(-1)
-  const [pulseItem, setPulseItem] = useState(-1)
-
-  useEffect(() => {
-    const count = Math.floor((progress / 100) * phase.items.length)
-    setVisibleItems(Array.from({ length: count }, (_, i) => i))
-  }, [progress, phase.items.length])
-
-  useEffect(() => {
-    if (visibleItems.length === 0) return
-    const interval = setInterval(() => {
-      setActiveItem((prev) => {
-        const next = (prev + 1) % visibleItems.length
-        return visibleItems[next]
-      })
-    }, 600)
-    return () => clearInterval(interval)
-  }, [visibleItems])
-
-  useEffect(() => {
-    if (visibleItems.length > 0) {
-      setPulseItem(visibleItems[visibleItems.length - 1])
-      const timeout = setTimeout(() => setPulseItem(-1), 400)
-      return () => clearTimeout(timeout)
-    }
-  }, [visibleItems])
-
   const treeItems = useMemo(() => [
-    { name: "whois-lookup", type: "file", indent: 0, icon: "search" },
-    { name: "dns-records", type: "file", indent: 0, icon: "dns" },
-    { name: "certificates/", type: "folder", indent: 0, icon: "folder" },
-    { name: "ssl-cert.pem", type: "file", indent: 1, icon: "lock" },
-    { name: "history/", type: "folder", indent: 0, icon: "folder" },
-    { name: "archive-data", type: "file", indent: 1, icon: "clock" },
+    { name: "whois-lookup", type: "file", indent: 0, icon: "@" },
+    { name: "dns-records", type: "file", indent: 0, icon: "#" },
+    { name: "certificates/", type: "folder", indent: 0, icon: "+" },
+    { name: "ssl-cert.pem", type: "file", indent: 1, icon: "*" },
+    { name: "history/", type: "folder", indent: 0, icon: "+" },
+    { name: "archive-data", type: "file", indent: 1, icon: "~" },
   ], [])
+
+  // Calculate which items are complete vs current vs pending
+  const completedCount = Math.floor((progress / 100) * treeItems.length)
+  const currentIndex = Math.min(completedCount, treeItems.length - 1)
+  const isAllComplete = progress >= 95
 
   return (
     <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
+      {/* Header */}
       <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border/50">
         <Globe className="h-4 w-4 text-accent" />
         <span className="text-xs font-mono text-muted-foreground">domain-scanner</span>
         <span className="text-xs text-muted-foreground ml-auto font-mono tabular-nums">
-          {visibleItems.length}/{phase.items.length} endpoints
+          {completedCount}/{treeItems.length} endpoints
         </span>
       </div>
 
-      <div className="space-y-1 font-mono text-sm">
+      {/* All items visible from start - skeleton → active → complete */}
+      <div className="space-y-1.5 font-mono text-sm">
         {treeItems.map((item, i) => {
-          const isVisible = visibleItems.includes(i)
-          const isActive = activeItem === i
-          const isPulsing = pulseItem === i
+          const isComplete = isAllComplete || i < completedCount
+          const isCurrent = !isAllComplete && i === currentIndex
+          const isPending = !isAllComplete && i > currentIndex
 
           return (
             <div
               key={item.name}
               className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
-                !isVisible ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"
-              } ${isActive ? "bg-accent text-white shadow-sm" : ""} ${isPulsing ? "bg-accent/30" : ""}`}
-              style={{ marginLeft: item.indent * 20, transitionDelay: `${i * 80}ms` }}
+                isCurrent
+                  ? "bg-accent text-white"
+                  : isComplete
+                    ? "bg-transparent"
+                    : "bg-transparent"
+              }`}
+              style={{ marginLeft: item.indent * 20 }}
             >
-              <div className={`w-4 h-4 flex items-center justify-center ${isActive ? "text-white" : "text-muted-foreground"}`}>
-                {item.icon === "folder" && <span className="text-xs">+</span>}
-                {item.icon === "search" && <span className="text-xs">@</span>}
-                {item.icon === "dns" && <span className="text-xs">#</span>}
-                {item.icon === "lock" && <span className="text-xs">*</span>}
-                {item.icon === "clock" && <span className="text-xs">~</span>}
-              </div>
-              <span className={`text-xs transition-colors ${
-                isActive ? "text-white font-medium" : item.type === "folder" ? "text-accent font-medium" : "text-muted-foreground"
+              {/* Icon */}
+              <div className={`w-4 h-4 flex items-center justify-center text-xs transition-colors duration-300 ${
+                isCurrent ? "text-white" : isComplete ? "text-accent" : "text-muted-foreground/30"
               }`}>
-                {item.name}
-              </span>
-              {isVisible && (
-                <div className="ml-auto flex items-center gap-1">
-                  {isActive && <span className="text-[10px] text-white/80 animate-pulse">scanning...</span>}
-                  {!isActive && i < visibleItems.length - 1 && <span className="text-[10px] text-accent/60">done</span>}
-                </div>
+                {item.icon}
+              </div>
+
+              {/* Name - show skeleton for pending */}
+              {isPending ? (
+                <div className="h-3 w-20 rounded bg-muted/50" />
+              ) : (
+                <span className={`text-xs transition-colors duration-300 ${
+                  isCurrent
+                    ? "text-white font-medium"
+                    : isComplete
+                      ? item.type === "folder" ? "text-accent font-medium" : "text-foreground"
+                      : "text-muted-foreground/40"
+                }`}>
+                  {item.name}
+                </span>
               )}
+
+              {/* Status */}
+              <div className="ml-auto">
+                {isCurrent && (
+                  <span className="text-[10px] text-white/80 animate-pulse">scanning...</span>
+                )}
+                {isComplete && (
+                  <span className="text-[10px] text-accent">✓</span>
+                )}
+                {isPending && (
+                  <div className="h-2 w-8 rounded bg-muted/30" />
+                )}
+              </div>
             </div>
           )
         })}
       </div>
 
+      {/* Progress bar */}
       <div className="absolute bottom-4 left-4 right-4">
         <div className="flex items-center gap-1">
-          {phase.items.map((_, i) => (
+          {treeItems.map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded-full transition-all duration-500 ${visibleItems.includes(i) ? "bg-accent" : "bg-muted"}`}
-              style={{ transitionDelay: `${i * 100}ms` }}
+              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                isAllComplete || i < completedCount ? "bg-accent" : i === currentIndex ? "bg-accent/50" : "bg-muted"
+              }`}
             />
           ))}
         </div>
         <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
           <span>Endpoints discovered</span>
-          <span>{visibleItems.length}/{phase.items.length}</span>
+          <span className="font-mono tabular-nums">{completedCount}/{treeItems.length}</span>
         </div>
       </div>
     </div>

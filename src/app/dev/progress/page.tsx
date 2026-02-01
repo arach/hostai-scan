@@ -294,6 +294,7 @@ function SegmentsVariant({ currentPhase, phaseProgress, overallProgress }: Varia
 export default function ProgressVariantsPage() {
   const [isPlaying, setIsPlaying] = useState(true)
   const [overallProgress, setOverallProgress] = useState(0)
+  const [holdMs, setHoldMs] = useState(800) // Configurable hold time
 
   // Calculate current phase and phase progress from overall progress
   const currentPhase = Math.min(Math.floor(overallProgress / 20), PHASES.length - 1)
@@ -375,7 +376,7 @@ export default function ProgressVariantsPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-4 mb-8 p-4 rounded-xl border border-border bg-card">
+        <div className="flex flex-wrap items-center gap-4 mb-8 p-4 rounded-xl border border-border bg-card">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors"
@@ -390,6 +391,22 @@ export default function ProgressVariantsPage() {
             <RotateCcw className="h-4 w-4" />
             Reset
           </button>
+
+          {/* Hold time slider */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+            <label className="text-xs text-muted-foreground whitespace-nowrap">Hold:</label>
+            <input
+              type="range"
+              min="0"
+              max="2000"
+              step="100"
+              value={holdMs}
+              onChange={(e) => setHoldMs(Number(e.target.value))}
+              className="w-24 h-1 accent-accent"
+            />
+            <span className="text-xs font-mono text-foreground w-14">{holdMs}ms</span>
+          </div>
+
           <div className="flex-1" />
           <div className="text-sm text-muted-foreground">
             Progress: <span className="font-mono text-foreground">{Math.round(overallProgress)}%</span>
@@ -398,6 +415,11 @@ export default function ProgressVariantsPage() {
             Phase: <span className="font-mono text-foreground">{currentPhase + 1}/{PHASES.length}</span>
           </div>
         </div>
+
+        {/* Note about hold time */}
+        <p className="text-xs text-muted-foreground mb-4">
+          Note: Hold time ({holdMs}ms) is configured here. Update <code className="bg-muted px-1 rounded">page.tsx</code> with your preferred value.
+        </p>
 
         {/* Variants Grid */}
         <div className="grid gap-6">
