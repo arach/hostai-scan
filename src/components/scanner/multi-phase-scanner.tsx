@@ -185,7 +185,7 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
   const isAllComplete = progress >= 95
 
   return (
-    <div className="flex flex-col h-72">
+    <div className="flex flex-col h-80">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
         <div className="flex gap-1.5">
@@ -197,39 +197,37 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
         <span className="text-xs font-mono text-muted-foreground">domain-scanner</span>
       </div>
 
-      {/* Body - scrollable content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-1 font-mono text-sm">
+      {/* Body - all items always rendered, visibility changes */}
+      <div className="flex-1 flex flex-col justify-center px-4 py-3">
+        <div className="space-y-0.5 font-mono">
           {treeItems.map((item, i) => {
             const isComplete = isAllComplete || i < completedCount
             const isCurrent = !isAllComplete && i === currentIndex
             const isVisible = isAllComplete || i <= currentIndex
 
-            if (!isVisible) return null
-
             return (
               <div
                 key={item.name}
-                className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
+                className={`flex items-center gap-2 py-1 px-2 rounded transition-all duration-300 ${
                   isCurrent ? "bg-accent text-white" : ""
-                }`}
-                style={{ marginLeft: item.indent * 20 }}
+                } ${!isVisible ? "opacity-0" : "opacity-100"}`}
+                style={{ marginLeft: item.indent * 16 }}
               >
-                <div className={`w-4 h-4 flex items-center justify-center text-xs ${
+                <div className={`w-3 h-3 flex items-center justify-center text-[10px] ${
                   isCurrent ? "text-white" : isComplete ? "text-accent" : "text-muted-foreground"
                 }`}>
                   {item.icon}
                 </div>
-                <span className={`text-xs ${
+                <span className={`text-[11px] ${
                   isCurrent ? "text-white font-medium"
-                    : isComplete ? (item.type === "folder" ? "text-accent font-medium" : "text-foreground")
+                    : isComplete ? (item.type === "folder" ? "text-accent" : "text-foreground")
                     : "text-muted-foreground"
                 }`}>
                   {item.name}
                 </span>
                 <div className="ml-auto">
-                  {isCurrent && <span className="text-[10px] text-white/80 animate-pulse">scanning...</span>}
-                  {isComplete && <span className="text-[10px] text-accent">✓</span>}
+                  {isCurrent && <span className="text-[9px] text-white/80 animate-pulse">scanning...</span>}
+                  {isComplete && <span className="text-[9px] text-accent">✓</span>}
                 </div>
               </div>
             )
@@ -259,16 +257,17 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
 // ============================================================================
 
 function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress: number }) {
+  // Cap at 8 items for cleaner display
   const barConfig = useMemo(() =>
-    phase.items.map((item, i) => {
-      const startDelay = i * 8 + (i > 2 ? 5 : 0) + (i > 5 ? 10 : 0)
+    phase.items.slice(0, 8).map((item, i) => {
+      const startDelay = i * 10 + (i > 3 ? 5 : 0)
       const loadDuration = 15 + (i % 3) * 12 + (i % 2) * 8
       const color = i % 3 === 0 ? "bg-accent" : i % 3 === 1 ? "bg-warning" : "bg-muted-foreground/70"
       return { id: item, startDelay, loadDuration, color }
     }), [phase.items]
   )
 
-  const [barWidths, setBarWidths] = useState<number[]>(() => phase.items.map(() => 0))
+  const [barWidths, setBarWidths] = useState<number[]>(() => barConfig.map(() => 0))
 
   useEffect(() => {
     setBarWidths(prev =>
@@ -278,15 +277,15 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
         let targetWidth = 0
         if (progress >= barEnd) targetWidth = 100
         else if (progress > barStart) targetWidth = ((progress - barStart) / bar.loadDuration) * 100
-        return Math.max(prev[i], targetWidth)
+        return Math.max(prev[i] ?? 0, targetWidth)
       })
     )
   }, [progress, barConfig])
 
-  const completedCount = barConfig.filter((_, i) => barWidths[i] >= 100).length
+  const completedCount = barConfig.filter((_, i) => (barWidths[i] ?? 0) >= 100).length
 
   return (
-    <div className="flex flex-col h-72">
+    <div className="flex flex-col h-80">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
         <div className="flex gap-1.5">
@@ -303,19 +302,19 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
         </div>
       </div>
 
-      {/* Body - waterfall chart */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
+      {/* Body - waterfall chart with more breathing room */}
+      <div className="flex-1 flex flex-col justify-center px-4 py-3 space-y-2">
         {barConfig.map((bar, i) => {
-          const width = barWidths[i] || 0
+          const width = barWidths[i] ?? 0
           const startPercent = (bar.startDelay / 100) * 90
           const widthPercent = (width / 100) * (bar.loadDuration / 100) * 90
 
           return (
             <div key={bar.id} className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground w-24 truncate font-mono">
+              <span className="text-[11px] text-muted-foreground w-28 truncate font-mono">
                 {bar.id.replace(/\.(ts|tsx|json)$/, "")}
               </span>
-              <div className="flex-1 h-3 bg-muted/30 rounded overflow-hidden relative">
+              <div className="flex-1 h-3.5 bg-muted/30 rounded overflow-hidden relative">
                 {[0, 25, 50, 75, 100].map(pos => (
                   <div key={pos} className="absolute top-0 bottom-0 w-px bg-border/30" style={{ left: `${pos}%` }} />
                 ))}
@@ -324,7 +323,7 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
                   style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
                 />
               </div>
-              <span className="text-[9px] font-mono text-muted-foreground w-10 text-right tabular-nums">
+              <span className="text-[10px] font-mono text-muted-foreground w-12 text-right tabular-nums">
                 {width > 0 ? `${Math.round(bar.startDelay * 5 + (width / 100) * bar.loadDuration * 5)}ms` : "—"}
               </span>
             </div>
@@ -371,7 +370,7 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
   const isAllComplete = progress >= 95
 
   return (
-    <div className="flex flex-col h-72">
+    <div className="flex flex-col h-80">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
         <div className="flex gap-1.5">
@@ -383,12 +382,13 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
         <span className="text-xs font-mono text-muted-foreground">seo-analyzer</span>
       </div>
 
-      {/* Body - metrics grid */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-3 gap-2">
+      {/* Body - metrics grid, all cells always visible */}
+      <div className="flex-1 flex items-center p-4">
+        <div className="grid grid-cols-3 gap-2.5 w-full">
           {seoMetrics.map((metric, i) => {
             const isComplete = isAllComplete || i < completedCount
             const isScanning = !isAllComplete && i === currentIndex
+            const isPending = !isAllComplete && i > currentIndex
 
             const resultColor = metric.result === "pass" ? "text-accent"
               : metric.result === "warning" ? "text-warning"
@@ -403,32 +403,33 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
             return (
               <div
                 key={metric.name}
-                className={`relative px-2.5 py-2 rounded-md border transition-all duration-200 ${
+                className={`relative px-3 py-2.5 rounded-md border transition-all duration-200 ${
                   isScanning
                     ? "bg-accent text-white border-accent ring-2 ring-accent/30"
                     : isComplete
                       ? `${resultBg} border-border/50`
-                      : "bg-muted/20 border-border/30"
+                      : "bg-muted/10 border-border/20"
                 }`}
               >
                 {isComplete && (
-                  <div className={`absolute top-1 right-1.5 text-[9px] font-bold ${resultColor}`}>
+                  <div className={`absolute top-1.5 right-2 text-[9px] font-bold ${resultColor}`}>
                     {resultIcon}
                   </div>
                 )}
                 {isScanning && (
-                  <div className="absolute top-1 right-1.5">
+                  <div className="absolute top-1.5 right-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   </div>
                 )}
-                <div className={`text-[10px] font-medium ${
-                  isScanning ? "text-white" : isComplete ? resultColor : "text-muted-foreground/40"
+                <div className={`text-[11px] font-medium ${
+                  isScanning ? "text-white" : isComplete ? resultColor : "text-muted-foreground/30"
                 }`}>
                   {metric.name}
                 </div>
-                <div className="mt-0.5">
+                <div className="mt-0.5 h-3">
                   {isScanning && <span className="text-[8px] text-white/80">scanning...</span>}
                   {isComplete && <span className={`text-[8px] ${resultColor} opacity-70`}>{metric.result}</span>}
+                  {isPending && <span className="text-[8px] text-muted-foreground/20">—</span>}
                 </div>
               </div>
             )
@@ -490,7 +491,7 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
   const checksComplete = Math.floor(progress / 100 * 8)
 
   return (
-    <div className="flex flex-col h-72">
+    <div className="flex flex-col h-80">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
         <div className="flex gap-1.5">
@@ -641,7 +642,7 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
   const getBarColor = (score: number) => score >= 80 ? "bg-accent" : score >= 60 ? "bg-warning" : "bg-destructive"
 
   return (
-    <div className="flex flex-col h-72">
+    <div className="flex flex-col h-80">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
         <div className="flex gap-1.5">
