@@ -150,17 +150,17 @@ function DomainLabelE({ domain }: { domain: string }) {
 }
 
 // ============================================================================
-// Toggle Button Group
+// Multi-Select Button Group
 // ============================================================================
-function ToggleGroup({
+function MultiSelectGroup({
   options,
   selected,
-  onChange,
+  onToggle,
   descriptions
 }: {
   options: string[]
-  selected: string
-  onChange: (val: string) => void
+  selected: string[]
+  onToggle: (val: string) => void
   descriptions?: Record<string, string>
 }) {
   return (
@@ -168,9 +168,9 @@ function ToggleGroup({
       {options.map((opt) => (
         <button
           key={opt}
-          onClick={() => onChange(opt)}
+          onClick={() => onToggle(opt)}
           className={`px-2.5 py-1 text-xs font-mono rounded transition-colors ${
-            selected === opt
+            selected.includes(opt)
               ? "bg-accent text-white"
               : "bg-muted/50 text-muted-foreground hover:bg-muted"
           }`}
@@ -191,9 +191,21 @@ export default function ProgressPlaygroundPage() {
   const [overallProgress, setOverallProgress] = useState(0)
   const [testDomain, setTestDomain] = useState("example-stays.com")
 
-  // Variant selections
-  const [progressVariant, setProgressVariant] = useState("A")
-  const [domainVariant, setDomainVariant] = useState("A")
+  // Variant selections (multi-select for stacking)
+  const [progressVariants, setProgressVariants] = useState<string[]>(["A"])
+  const [domainVariants, setDomainVariants] = useState<string[]>(["A"])
+
+  const toggleProgress = (v: string) => {
+    setProgressVariants(prev =>
+      prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
+    )
+  }
+
+  const toggleDomain = (v: string) => {
+    setDomainVariants(prev =>
+      prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
+    )
+  }
 
   // Calculate current phase from overall progress
   const currentPhase = Math.min(Math.floor(overallProgress / 20), PHASES.length - 1)
@@ -274,43 +286,65 @@ export default function ProgressPlaygroundPage() {
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-foreground">Progress Indicator</h2>
-            <ToggleGroup
+            <MultiSelectGroup
               options={["A", "B"]}
-              selected={progressVariant}
-              onChange={setProgressVariant}
+              selected={progressVariants}
+              onToggle={toggleProgress}
               descriptions={progressDescriptions}
             />
           </div>
-          <div className="p-8 rounded-2xl border border-border bg-card flex items-center justify-center min-h-[120px]">
-            {progressVariant === "A" && <ProgressTrack currentPhase={currentPhase} />}
-            {progressVariant === "B" && <ProgressDots currentPhase={currentPhase} />}
+          <div className="space-y-3">
+            {progressVariants.length === 0 && (
+              <div className="p-8 rounded-2xl border border-dashed border-border bg-card/50 flex items-center justify-center min-h-[120px]">
+                <span className="text-sm text-muted-foreground">Select variants to compare</span>
+              </div>
+            )}
+            {progressVariants.sort().map((v) => (
+              <div key={v} className="p-8 rounded-2xl border border-border bg-card">
+                <div className="flex items-center justify-center min-h-[80px]">
+                  {v === "A" && <ProgressTrack currentPhase={currentPhase} />}
+                  {v === "B" && <ProgressDots currentPhase={currentPhase} />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 text-center font-mono">
+                  {v}: {progressDescriptions[v]}
+                </p>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            {progressDescriptions[progressVariant]}
-          </p>
         </section>
 
         {/* Domain Label */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-foreground">Domain Label</h2>
-            <ToggleGroup
+            <MultiSelectGroup
               options={["A", "B", "C", "D", "E"]}
-              selected={domainVariant}
-              onChange={setDomainVariant}
+              selected={domainVariants}
+              onToggle={toggleDomain}
               descriptions={domainDescriptions}
             />
           </div>
-          <div className="p-8 rounded-2xl border border-border bg-card flex items-center justify-center min-h-[80px]">
-            {domainVariant === "A" && <DomainLabelA domain={testDomain} />}
-            {domainVariant === "B" && <DomainLabelB domain={testDomain} />}
-            {domainVariant === "C" && <DomainLabelC domain={testDomain} />}
-            {domainVariant === "D" && <DomainLabelD domain={testDomain} />}
-            {domainVariant === "E" && <DomainLabelE domain={testDomain} />}
+          <div className="space-y-3">
+            {domainVariants.length === 0 && (
+              <div className="p-8 rounded-2xl border border-dashed border-border bg-card/50 flex items-center justify-center min-h-[80px]">
+                <span className="text-sm text-muted-foreground">Select variants to compare</span>
+              </div>
+            )}
+            {domainVariants.sort().map((v) => (
+              <div key={v} className="p-8 rounded-2xl border border-border bg-card">
+                <div className="flex items-center justify-center">
+                  {v === "A" && <DomainLabelA domain={testDomain} />}
+                  {v === "B" && <DomainLabelB domain={testDomain} />}
+                  {v === "C" && <DomainLabelC domain={testDomain} />}
+                  {v === "D" && <DomainLabelD domain={testDomain} />}
+                  {v === "E" && <DomainLabelE domain={testDomain} />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 text-center font-mono">
+                  {v}: {domainDescriptions[v]}
+                </p>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            {domainDescriptions[domainVariant]}
-          </p>
         </section>
       </div>
     </main>
