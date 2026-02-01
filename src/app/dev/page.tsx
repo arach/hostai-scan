@@ -1,9 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { Activity, Gauge, Palette, FlaskConical } from "lucide-react"
+import { Activity, Gauge, Palette, FlaskConical, Loader } from "lucide-react"
 
 const devTools = [
+  {
+    href: "/dev/progress",
+    icon: <Loader className="h-5 w-5" />,
+    name: "Progress Variants",
+    description: "Compare different progress indicator designs",
+  },
   {
     href: "/dev/scanner",
     icon: <Activity className="h-5 w-5" />,

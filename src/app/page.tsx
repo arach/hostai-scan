@@ -51,6 +51,7 @@ export default function Home() {
   const [domain, setDomain] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState<AuditResult | null>(null);
+  const [pendingResult, setPendingResult] = useState<AuditResult | null>(null); // Holds result until animation completes
   const [progress, setProgress] = useState<AuditProgress>({
     progress: 0,
     currentStep: "Starting audit...",
@@ -58,11 +59,30 @@ export default function Home() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Scanner progress hook for the loading animation
+  // Runs at a steady, comfortable pace independent of actual API timing
+  // Equal time per phase: 10 seconds × 5 phases = 50 seconds
   const scannerProgress = useScannerProgress({
     phases: DEFAULT_PHASES,
-    totalDuration: 60000, // 60 seconds
+    totalDuration: 50000,
     autoStart: false,
+    onComplete: () => {
+      // Animation finished - show result if we have one
+      if (pendingResult) {
+        setResult(pendingResult);
+        setPendingResult(null);
+        setStatus("complete");
+      }
+    },
   });
+
+  // When API completes but animation still running, wait for animation
+  useEffect(() => {
+    if (pendingResult && scannerProgress.progress.isComplete) {
+      setResult(pendingResult);
+      setPendingResult(null);
+      setStatus("complete");
+    }
+  }, [pendingResult, scannerProgress.progress.isComplete]);
 
   const pollJobStatus = useCallback(async (jobId: string, auditDomain: string) => {
     try {
@@ -74,16 +94,16 @@ export default function Home() {
           clearInterval(pollingRef.current);
           pollingRef.current = null;
         }
-        setResult(data.result as AuditResult);
-        setStatus("complete");
+        // Store result but wait for animation to complete
+        setPendingResult(data.result as AuditResult);
       } else if (data.status === "failed") {
         if (pollingRef.current) {
           clearInterval(pollingRef.current);
           pollingRef.current = null;
         }
         console.error("Audit failed:", data.error);
-        setResult({ ...DEMO_RESULT, domain: auditDomain, timestamp: new Date().toISOString() });
-        setStatus("complete");
+        // Store fallback result but wait for animation
+        setPendingResult({ ...DEMO_RESULT, domain: auditDomain, timestamp: new Date().toISOString() });
       } else {
         setProgress({
           progress: data.progress || 0,
@@ -128,8 +148,8 @@ export default function Home() {
       pollJobStatus(jobId, domain.trim());
     } catch (err) {
       console.error("Audit failed:", err);
-      setResult({ ...DEMO_RESULT, domain: domain.trim(), timestamp: new Date().toISOString() });
-      setStatus("complete");
+      // Store fallback result but wait for animation
+      setPendingResult({ ...DEMO_RESULT, domain: domain.trim(), timestamp: new Date().toISOString() });
     }
   };
 
@@ -141,6 +161,7 @@ export default function Home() {
     scannerProgress.reset();
     setStatus("idle");
     setResult(null);
+    setPendingResult(null);
     setDomain("");
     setError("");
     setProgress({ progress: 0, currentStep: "Starting audit..." });
@@ -181,7 +202,7 @@ export default function Home() {
         <MultiPhaseScanner
           currentPhase={scannerProgress.progress.currentPhase}
           phaseProgress={scannerProgress.progress.phaseProgress}
-          overallProgress={Math.max(progress.progress, scannerProgress.progress.overallProgress)}
+          overallProgress={scannerProgress.progress.overallProgress}
         />
 
         <button

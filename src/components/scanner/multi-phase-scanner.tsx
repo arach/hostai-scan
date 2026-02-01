@@ -1,8 +1,17 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { Globe, Zap, Search, Eye, Calculator } from "lucide-react"
+import { Globe, Zap, Search, Eye, Calculator, Check } from "lucide-react"
 import type { AuditPhase } from "./types"
+
+// Compact phase icons for the progress track
+const PHASE_ICONS: Record<string, React.ReactNode> = {
+  domain: <Globe className="h-3.5 w-3.5" />,
+  performance: <Zap className="h-3.5 w-3.5" />,
+  seo: <Search className="h-3.5 w-3.5" />,
+  ui: <Eye className="h-3.5 w-3.5" />,
+  scoring: <Calculator className="h-3.5 w-3.5" />,
+}
 
 interface MultiPhaseScannerProps {
   /** Current phase index (0-based) */
@@ -69,23 +78,63 @@ export function MultiPhaseScanner({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Phase indicator pills */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        {phases.map((p, i) => (
+      {/* Progress Track */}
+      <div className="mb-8 px-6">
+        <div className="relative">
+          {/* Background track line */}
+          <div className="absolute top-3 left-3 right-3 h-px bg-border" />
+
+          {/* Filled track line - grows with progress */}
           <div
-            key={p.id}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-500 ${
-              i === currentPhase
-                ? "bg-accent text-white scale-110 shadow-lg shadow-accent/25"
-                : i < currentPhase
-                  ? "bg-accent/20 text-accent"
-                  : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {p.icon}
-            <span className="hidden sm:inline">{p.name}</span>
+            className="absolute top-3 left-3 h-px bg-accent transition-all duration-300 ease-out"
+            style={{
+              width: phases.length > 1
+                ? `calc(${(currentPhase / (phases.length - 1)) * 100}% - 24px)`
+                : '0%'
+            }}
+          />
+
+          {/* Phase indicators - equidistant */}
+          <div className="relative flex justify-between">
+            {phases.map((p, i) => {
+              const isComplete = i < currentPhase
+              const isCurrent = i === currentPhase
+
+              return (
+                <div key={p.id} className="flex flex-col items-center">
+                  {/* Circle */}
+                  <div className={`
+                    relative w-6 h-6 rounded-full flex items-center justify-center
+                    transition-all duration-300 ease-out z-10
+                    ${isComplete
+                      ? "bg-accent text-white"
+                      : isCurrent
+                        ? "bg-accent text-white ring-4 ring-accent/20"
+                        : "bg-card text-muted-foreground border border-border"
+                    }
+                  `}>
+                    {isComplete ? (
+                      <Check className="h-3 w-3" />
+                    ) : (
+                      PHASE_ICONS[p.id] || <span className="text-[10px] font-medium">{i + 1}</span>
+                    )}
+                    {isCurrent && (
+                      <div className="absolute inset-0 rounded-full bg-accent animate-ping opacity-30" />
+                    )}
+                  </div>
+
+                  {/* Label - centered below */}
+                  <span className={`
+                    mt-2 text-[10px] font-medium text-center whitespace-nowrap transition-all duration-300
+                    ${isCurrent ? "text-foreground" : isComplete ? "text-accent" : "text-muted-foreground"}
+                  `}>
+                    {p.name.split(' ')[0]}
+                  </span>
+                </div>
+              )
+            })}
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Main scanner container */}
@@ -216,7 +265,9 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
       <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border/50">
         <Globe className="h-4 w-4 text-accent" />
         <span className="text-xs font-mono text-muted-foreground">domain-scanner</span>
-        <span className="text-xs text-muted-foreground ml-auto">/{phase.items.length} endpoints</span>
+        <span className="text-xs text-muted-foreground ml-auto font-mono tabular-nums">
+          {visibleItems.length}/{phase.items.length} endpoints
+        </span>
       </div>
 
       <div className="space-y-1 font-mono text-sm">
@@ -305,17 +356,20 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
   }, [progress, barConfig])
 
   return (
-    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
-      <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
-        <span>Resource</span>
-        <div className="flex gap-8 pr-2">
+    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border flex flex-col">
+      {/* Header row with time markers */}
+      <div className="flex items-center px-3 py-2 border-b border-border/50 bg-muted/30">
+        <span className="text-[10px] text-muted-foreground font-medium w-24">Resource</span>
+        <div className="flex-1 flex justify-between text-[10px] text-muted-foreground font-mono">
           <span>0ms</span>
           <span>250ms</span>
           <span>500ms</span>
         </div>
+        <span className="text-[10px] text-muted-foreground w-10 text-right">Time</span>
       </div>
 
-      <div className="space-y-1.5">
+      {/* Waterfall chart body */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
         {barConfig.map((bar, i) => {
           const width = barWidths[i] || 0
           const startPercent = (bar.startDelay / 100) * 90
@@ -326,18 +380,18 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
               <span className="text-[10px] text-muted-foreground w-24 truncate font-mono">
                 {bar.id.replace(/\.(ts|tsx|json)$/, "")}
               </span>
-              <div className="flex-1 h-3 bg-muted/20 rounded overflow-hidden relative">
-                <div className="absolute inset-0 flex">
-                  {[25, 50, 75].map(pos => (
-                    <div key={pos} className="absolute top-0 bottom-0 w-px bg-border/30" style={{ left: `${pos}%` }} />
-                  ))}
-                </div>
+              <div className="flex-1 h-3 bg-muted/30 rounded overflow-hidden relative">
+                {/* Grid lines */}
+                {[0, 25, 50, 75, 100].map(pos => (
+                  <div key={pos} className="absolute top-0 bottom-0 w-px bg-border/40" style={{ left: `${pos}%` }} />
+                ))}
+                {/* Bar */}
                 <div
                   className={`absolute top-0 bottom-0 ${bar.color} rounded transition-all duration-200 ease-out`}
                   style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
                 />
               </div>
-              <span className="text-[9px] font-mono text-muted-foreground w-10 text-right">
+              <span className="text-[9px] font-mono text-muted-foreground w-10 text-right tabular-nums">
                 {width > 0 ? `${Math.round(bar.startDelay * 5 + (width / 100) * bar.loadDuration * 5)}ms` : "—"}
               </span>
             </div>
@@ -345,12 +399,16 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
         })}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
-        <div className="relative">
-          <div className="w-1.5 h-1.5 rounded-full bg-warning" />
-          <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-warning animate-ping" />
+      {/* Status footer */}
+      <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+          </div>
+          <span className="text-[10px] font-mono text-muted-foreground">analyzing resources...</span>
         </div>
-        <span>Analyzing resource timing...</span>
+        <span className="text-[10px] font-mono text-muted-foreground">{barConfig.filter((_, i) => barWidths[i] >= 100).length}/{barConfig.length}</span>
       </div>
     </div>
   )
@@ -483,76 +541,91 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
 
   return (
     <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
-      <div className="flex items-center justify-center gap-6 h-full">
-        {/* Desktop frame */}
-        <div className="relative w-48 h-32 rounded-lg border-2 border-border bg-card overflow-hidden">
-          <div className="h-4 bg-muted border-b border-border flex items-center px-2 gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-destructive/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-warning/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-accent/60" />
-          </div>
-          <div className="relative h-full">
-            <div className="p-2 space-y-1">
-              <div className="h-2 w-16 bg-muted rounded" />
-              <div className="h-1 w-24 bg-muted/50 rounded" />
-              <div className="h-1 w-20 bg-muted/50 rounded" />
-              <div className="h-6 w-full bg-muted/30 rounded mt-2" />
+      {/* Devices - bottom aligned */}
+      <div className="flex items-end justify-center gap-8 h-48">
+        {/* Desktop */}
+        <div className="flex flex-col items-center">
+          <div className="relative w-48 h-32 rounded-lg border-2 border-border bg-card overflow-hidden">
+            <div className="h-4 bg-muted border-b border-border flex items-center px-2 gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-destructive/60" />
+              <div className="w-1.5 h-1.5 rounded-full bg-warning/60" />
+              <div className="w-1.5 h-1.5 rounded-full bg-accent/60" />
             </div>
-            <div
-              className="absolute left-0 right-0 h-1 bg-gradient-to-b from-accent to-transparent"
-              style={{ top: `${scanProgress.desktop}%`, transition: "top 0.1s linear" }}
-            />
-            {highlights.slice(0, 3).map((h, i) => (
+            <div className="relative h-full">
+              <div className="p-2 space-y-1">
+                <div className="h-2 w-16 bg-muted rounded" />
+                <div className="h-1 w-24 bg-muted/50 rounded" />
+                <div className="h-1 w-20 bg-muted/50 rounded" />
+                <div className="h-6 w-full bg-muted/30 rounded mt-2" />
+              </div>
               <div
-                key={i}
-                className={`absolute w-3 h-3 rounded-full border-2 ${
-                  h.type === "warning" ? "border-warning bg-warning/20" :
-                  h.type === "destructive" ? "border-destructive bg-destructive/20" :
-                  "border-accent bg-accent/20"
-                }`}
-                style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                className="absolute left-0 right-0 h-1 bg-gradient-to-b from-accent to-transparent"
+                style={{ top: `${scanProgress.desktop}%`, transition: "top 0.1s linear" }}
               />
-            ))}
+              {highlights.slice(0, 3).map((h, i) => (
+                <div
+                  key={i}
+                  className={`absolute w-3 h-3 rounded-full border-2 ${
+                    h.type === "warning" ? "border-warning bg-warning/20" :
+                    h.type === "destructive" ? "border-destructive bg-destructive/20" :
+                    "border-accent bg-accent/20"
+                  }`}
+                  style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                />
+              ))}
+            </div>
           </div>
-          <span className="absolute bottom-1 right-2 text-[8px] text-muted-foreground">Desktop</span>
+          <div className="mt-2 text-center">
+            <div className="text-[10px] font-medium text-muted-foreground">Desktop</div>
+            <div className="text-[9px] text-muted-foreground/60 font-mono">1440 × 900</div>
+          </div>
         </div>
 
-        {/* Mobile frame */}
-        <div className="relative w-20 h-40 rounded-xl border-2 border-border bg-card overflow-hidden">
-          <div className="h-3 bg-muted border-b border-border flex items-center justify-center">
-            <div className="w-6 h-1 rounded-full bg-border" />
-          </div>
-          <div className="relative h-full">
-            <div className="p-1.5 space-y-1">
-              <div className="h-1.5 w-10 bg-muted rounded" />
-              <div className="h-1 w-12 bg-muted/50 rounded" />
-              <div className="h-4 w-full bg-muted/30 rounded mt-1" />
-              <div className="h-1 w-8 bg-muted/50 rounded" />
+        {/* Mobile */}
+        <div className="flex flex-col items-center">
+          <div className="relative w-20 h-40 rounded-xl border-2 border-border bg-card overflow-hidden">
+            <div className="h-3 bg-muted border-b border-border flex items-center justify-center">
+              <div className="w-6 h-1 rounded-full bg-border" />
             </div>
-            <div
-              className="absolute left-0 right-0 h-1 bg-gradient-to-b from-accent to-transparent"
-              style={{ top: `${scanProgress.mobile}%`, transition: "top 0.1s linear" }}
-            />
-            {highlights.slice(3, 6).map((h, i) => (
+            <div className="relative h-full">
+              <div className="p-1.5 space-y-1">
+                <div className="h-1.5 w-10 bg-muted rounded" />
+                <div className="h-1 w-12 bg-muted/50 rounded" />
+                <div className="h-4 w-full bg-muted/30 rounded mt-1" />
+                <div className="h-1 w-8 bg-muted/50 rounded" />
+              </div>
               <div
-                key={i}
-                className={`absolute w-2 h-2 rounded-full border ${
-                  h.type === "warning" ? "border-warning bg-warning/20" :
-                  h.type === "destructive" ? "border-destructive bg-destructive/20" :
-                  "border-accent bg-accent/20"
-                }`}
-                style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                className="absolute left-0 right-0 h-1 bg-gradient-to-b from-accent to-transparent"
+                style={{ top: `${scanProgress.mobile}%`, transition: "top 0.1s linear" }}
               />
-            ))}
+              {highlights.slice(3, 6).map((h, i) => (
+                <div
+                  key={i}
+                  className={`absolute w-2 h-2 rounded-full border ${
+                    h.type === "warning" ? "border-warning bg-warning/20" :
+                    h.type === "destructive" ? "border-destructive bg-destructive/20" :
+                    "border-accent bg-accent/20"
+                  }`}
+                  style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                />
+              ))}
+            </div>
           </div>
-          <span className="absolute bottom-1 right-1 text-[6px] text-muted-foreground">Mobile</span>
+          <div className="mt-2 text-center">
+            <div className="text-[10px] font-medium text-muted-foreground">Mobile</div>
+            <div className="text-[9px] text-muted-foreground/60 font-mono">iPhone 16 Pro</div>
+          </div>
         </div>
       </div>
 
-      <div className="absolute bottom-2 left-2 flex gap-3 text-[10px] text-muted-foreground">
-        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-accent" /> Pass</span>
-        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-warning" /> Warning</span>
-        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-destructive" /> Issue</span>
+      {/* Legend */}
+      <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+        <div className="flex gap-3 text-[9px] text-muted-foreground">
+          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-accent" /> Pass</span>
+          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-warning" /> Warning</span>
+          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-destructive" /> Issue</span>
+        </div>
+        <span className="text-[9px] font-mono text-muted-foreground">{highlights.length}/6 checks</span>
       </div>
     </div>
   )

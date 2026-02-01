@@ -6,11 +6,11 @@ import scannerConfig from "@/config/scanner-phases.json"
  * Phase metadata - icons, colors, weights (can't be stored in JSON)
  */
 const PHASE_META: Record<string, { icon: React.ReactNode; color: string; weight: number }> = {
-  domain: { icon: <Globe className="h-5 w-5" />, color: "accent", weight: 15 },
-  performance: { icon: <Zap className="h-5 w-5" />, color: "warning", weight: 25 },
+  domain: { icon: <Globe className="h-5 w-5" />, color: "accent", weight: 20 },
+  performance: { icon: <Zap className="h-5 w-5" />, color: "warning", weight: 20 },
   seo: { icon: <Search className="h-5 w-5" />, color: "accent", weight: 20 },
-  ui: { icon: <Eye className="h-5 w-5" />, color: "destructive", weight: 25 },
-  scoring: { icon: <Calculator className="h-5 w-5" />, color: "accent", weight: 15 },
+  ui: { icon: <Eye className="h-5 w-5" />, color: "destructive", weight: 20 },
+  scoring: { icon: <Calculator className="h-5 w-5" />, color: "accent", weight: 20 },
 }
 
 /**
