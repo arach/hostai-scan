@@ -61,7 +61,7 @@
     },
     {
       "id": "scoring",
-      "name": "Calculating Scores",
+      "name": "Scoring",
       "description": "Computing final audit results",
       "items": [
         "performance-score.ts",

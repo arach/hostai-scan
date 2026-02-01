@@ -1,15 +1,19 @@
 import { notFound } from "next/navigation";
 import { loadAudit } from "@/lib/audit-storage";
 import { PublicReportView } from "@/components/report";
+import { ReportVariantB } from "@/components/report/variants/report-variant-b";
+import { ReportVariantC } from "@/components/report/variants/report-variant-c";
 import type { AuditResult } from "@/types/audit";
 
 interface PageProps {
   params: Promise<{ auditId: string }>;
+  searchParams: Promise<{ v?: string }>;
 }
 
 // This page loads a saved audit from JSON - completely static, no regeneration
-export default async function ReportPage({ params }: PageProps) {
+export default async function ReportPage({ params, searchParams }: PageProps) {
   const { auditId } = await params;
+  const { v: variant } = await searchParams;
 
   const audit = await loadAudit(auditId);
 
@@ -19,7 +23,16 @@ export default async function ReportPage({ params }: PageProps) {
 
   const result = audit.result as AuditResult;
 
-  return <PublicReportView result={result} />;
+  // Select variant based on query param
+  switch (variant) {
+    case "b":
+      return <ReportVariantB result={result} />;
+    case "c":
+      return <ReportVariantC result={result} />;
+    case "a":
+    default:
+      return <PublicReportView result={result} />;
+  }
 }
 
 // Generate metadata for sharing

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
-import { Globe, Zap, Search, Eye, Calculator, Check } from "lucide-react"
+import { useEffect, useState, useMemo, useId } from "react"
+import { Globe, Zap, Search, Eye, Calculator, Check, AlertTriangle, XCircle, ChevronRight } from "lucide-react"
 import type { AuditPhase } from "./types"
 
 // Compact phase icons for the progress track
@@ -24,6 +24,12 @@ interface MultiPhaseScannerProps {
   phases?: AuditPhase[]
   /** Domain being scanned */
   domain?: string
+  /** Callback when View Report is clicked */
+  onViewReport?: () => void
+  /** Final score to display on completion (optional) */
+  finalScore?: number
+  /** Top issues to show in completion view */
+  topIssues?: { title: string; status: "fail" | "warning" }[]
 }
 
 // Default phases if none provided
@@ -62,7 +68,7 @@ const DEFAULT_PHASES: AuditPhase[] = [
   },
   {
     id: "scoring",
-    name: "Calculating Scores",
+    name: "Scoring",
     description: "Computing weighted audit results",
     icon: <Calculator className="h-5 w-5" />,
     color: "accent",
@@ -76,18 +82,24 @@ export function MultiPhaseScanner({
   overallProgress,
   phases = DEFAULT_PHASES,
   domain,
+  onViewReport,
+  finalScore,
+  topIssues,
 }: MultiPhaseScannerProps) {
   const phase = phases[currentPhase] || phases[0]
 
+  // Check if scan is complete (last phase at 100%)
+  const isComplete = currentPhase >= phases.length - 1 && phaseProgress >= 100
+
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Domain label - underline accent style */}
+      {/* Domain label - gradient pill just for domain */}
       {domain && (
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex items-center justify-center gap-3 mb-6">
           <span className="text-xl text-muted-foreground">Scanning</span>
-          <span className="text-xl font-semibold text-foreground relative">
+          <span className="relative px-4 py-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-indigo-400 text-white font-semibold text-lg shadow-md">
             {domain}
-            <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full" />
+            <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-violet-500 to-indigo-400 blur-lg opacity-40 -z-10" />
           </span>
         </div>
       )}
@@ -95,44 +107,53 @@ export function MultiPhaseScanner({
       {/* Progress Track */}
       <div className="mb-8 px-6">
         <div className="relative">
-          {/* Background track line */}
-          <div className="absolute top-3 left-3 right-3 h-px bg-border" />
+          {/* Background track line - from first to last dot center */}
+          <div
+            className="absolute top-3 h-px bg-border"
+            style={{
+              left: `${100 / phases.length / 2}%`,
+              right: `${100 / phases.length / 2}%`,
+            }}
+          />
 
           {/* Filled track line - grows with progress */}
           <div
-            className="absolute top-3 left-3 h-px bg-accent transition-all duration-300 ease-out"
+            className="absolute top-3 h-px bg-accent transition-all duration-300 ease-out"
             style={{
+              left: `${100 / phases.length / 2}%`,
               width: phases.length > 1
-                ? `calc(${(currentPhase / (phases.length - 1)) * 100}% - 24px)`
+                ? `${(currentPhase / (phases.length - 1)) * (100 - 100 / phases.length)}%`
                 : '0%'
             }}
           />
 
-          {/* Phase indicators - equidistant */}
-          <div className="relative flex justify-between">
+          {/* Phase indicators - equidistant with fixed widths */}
+          <div className="relative flex">
             {phases.map((p, i) => {
-              const isComplete = i < currentPhase
-              const isCurrent = i === currentPhase
+              const isPhaseComplete = i < currentPhase
+              const isCurrent = i === currentPhase && !isComplete
+              const isAllDone = isComplete // Scan fully finished
 
               return (
-                <div key={p.id} className="flex flex-col items-center">
+                <div
+                  key={p.id}
+                  className="flex flex-col items-center"
+                  style={{ width: `${100 / phases.length}%` }}
+                >
                   {/* Circle */}
                   <div className={`
                     relative w-6 h-6 rounded-full flex items-center justify-center
                     transition-all duration-300 ease-out z-10
-                    ${isComplete
+                    ${isAllDone || isPhaseComplete
                       ? "bg-accent text-white"
                       : isCurrent
                         ? "bg-accent text-white ring-4 ring-accent/20"
                         : "bg-card text-muted-foreground border border-border"
                     }
                   `}>
-                    {isComplete ? (
-                      <Check className="h-3 w-3" />
-                    ) : (
-                      PHASE_ICONS[p.id] || <span className="text-[10px] font-medium">{i + 1}</span>
-                    )}
-                    {isCurrent && (
+                    {/* Always show the phase icon, filled state indicated by bg color */}
+                    {PHASE_ICONS[p.id] || <span className="text-[10px] font-medium">{i + 1}</span>}
+                    {isCurrent && !isAllDone && (
                       <div className="absolute inset-0 rounded-full bg-accent animate-ping opacity-30" />
                     )}
                   </div>
@@ -140,7 +161,7 @@ export function MultiPhaseScanner({
                   {/* Label - centered below */}
                   <span className={`
                     mt-2 text-[10px] font-medium text-center whitespace-nowrap transition-all duration-300
-                    ${isCurrent ? "text-foreground" : isComplete ? "text-accent" : "text-muted-foreground"}
+                    ${isAllDone ? "text-accent" : isCurrent ? "text-foreground" : isPhaseComplete ? "text-accent" : "text-muted-foreground"}
                   `}>
                     {p.name.split(' ')[0]}
                   </span>
@@ -153,7 +174,183 @@ export function MultiPhaseScanner({
 
       {/* Main scanner container - just the phase animation with its own header/footer */}
       <div className="relative overflow-hidden rounded-2xl bg-card/90 backdrop-blur-xl border border-border shadow-2xl">
-        <PhaseAnimation phase={phase} progress={phaseProgress} />
+        {isComplete ? (
+          <CompletionView
+            score={finalScore ?? 72}
+            domain={domain}
+            onViewReport={onViewReport}
+            topIssues={topIssues}
+          />
+        ) : (
+          <PhaseAnimation phase={phase} progress={phaseProgress} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// Completion View - Shown when scan finishes
+// ============================================================================
+
+// Animated score ring for completion view
+function CompletionScoreRing({ score, size = 100 }: { score: number; size?: number }) {
+  const instanceId = useId()
+  const [animatedScore, setAnimatedScore] = useState(0)
+  const strokeWidth = 6
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+
+  const scoreColor = score >= 80 ? "text-emerald-500" : score >= 60 ? "text-amber-500" : "text-rose-500"
+  const gradientColors = score >= 80
+    ? { start: "#10b981", end: "#34d399" }
+    : score >= 60
+    ? { start: "#f59e0b", end: "#fbbf24" }
+    : { start: "#ef4444", end: "#f87171" }
+
+  useEffect(() => {
+    const duration = 1000
+    const start = Date.now()
+    const animate = () => {
+      const elapsed = Date.now() - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setAnimatedScore(Math.round(eased * score))
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [score])
+
+  const offset = circumference * (1 - animatedScore / 100)
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <defs>
+          <linearGradient id={`completion-gradient-${instanceId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={gradientColors.start} />
+            <stop offset="100%" stopColor={gradientColors.end} />
+          </linearGradient>
+          <filter id={`completion-glow-${instanceId}`}>
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="hsl(var(--muted))"
+          strokeWidth={strokeWidth}
+          opacity={0.3}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#completion-gradient-${instanceId})`}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          filter={`url(#completion-glow-${instanceId})`}
+          className="transition-all duration-300 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`text-3xl font-bold tabular-nums ${scoreColor}`}>
+          {animatedScore}
+        </span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+          Score
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function CompletionView({
+  score,
+  domain,
+  onViewReport,
+}: {
+  score: number
+  domain?: string
+  onViewReport?: () => void
+  topIssues?: { title: string; status: "fail" | "warning" }[]
+}) {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const failCount = score >= 80 ? 1 : score >= 60 ? 3 : 5
+  const warnCount = score >= 80 ? 1 : score >= 60 ? 2 : 3
+
+  return (
+    <div className="flex flex-col h-80">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+        </div>
+        <Check className="h-3.5 w-3.5 text-accent ml-2" />
+        <span className="text-xs font-mono text-accent">audit-complete</span>
+      </div>
+
+      {/* Body - centered, score focused */}
+      <div className={`flex-1 flex flex-col items-center justify-center p-5 -mt-1 transition-all duration-500 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}>
+        {/* Score gauge - hero element */}
+        <CompletionScoreRing score={score} size={110} />
+
+        {/* Quick stats row */}
+        <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-1.5 text-xs">
+            <XCircle className="w-3.5 h-3.5 text-destructive" />
+            <span className="text-muted-foreground">{failCount} critical</span>
+          </div>
+          <div className="w-px h-3 bg-border" />
+          <div className="flex items-center gap-1.5 text-xs">
+            <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+            <span className="text-muted-foreground">{warnCount} warnings</span>
+          </div>
+        </div>
+
+        {/* Sales-y transition message */}
+        <div className="mt-4 text-center">
+          <div className="text-sm font-medium text-foreground">Your 50-point audit is ready</div>
+          <div className="text-xs text-muted-foreground mt-0.5">Full breakdown with actionable fixes</div>
+        </div>
+
+        {/* CTA */}
+        <button
+          onClick={onViewReport}
+          className="group mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full
+            bg-foreground text-background text-sm font-medium
+            hover:opacity-90 transition-all duration-200
+            shadow-md hover:shadow-lg"
+        >
+          <span>Get Your Free Report</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-center px-4 py-3 border-t border-border/50 bg-muted/30">
+        <span className="text-xs text-muted-foreground">
+          {domain ? `${domain}` : "Scan complete"}
+        </span>
       </div>
     </div>
   )
@@ -529,7 +726,7 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
       </div>
 
       {/* Body - device previews */}
-      <div className="flex-1 flex items-end justify-center gap-8 p-4 pb-2">
+      <div className="flex-1 flex items-end justify-center gap-8 p-4 pb-6">
         {/* Desktop */}
         <div className="flex flex-col items-center">
           <div className="relative w-44 h-28 rounded-lg border-2 border-border bg-card overflow-hidden">
@@ -562,7 +759,7 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
             </div>
           </div>
           <div className="mt-1.5 text-center">
-            <div className="text-[9px] text-muted-foreground font-mono">1440 × 900</div>
+            <div className="text-[9px] text-muted-foreground font-mono">MacBook Air · 1440×900</div>
           </div>
         </div>
 
@@ -596,7 +793,7 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
             </div>
           </div>
           <div className="mt-1.5 text-center">
-            <div className="text-[9px] text-muted-foreground font-mono">iPhone 16</div>
+            <div className="text-[9px] text-muted-foreground font-mono">iPhone 17 Pro · 402×874</div>
           </div>
         </div>
       </div>

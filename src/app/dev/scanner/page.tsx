@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { MultiPhaseScanner, DEFAULT_PHASES } from "@/components/scanner"
+import { HeroSection } from "@/components/landing"
 import type { AuditPhase } from "@/components/scanner"
 import {
   Play,
@@ -24,10 +25,21 @@ import {
 const STORAGE_KEY = "gethostai-scanner-custom-phases"
 
 export default function ScannerDevPage() {
+  // Form state
+  const [includeForm, setIncludeForm] = useState(false)
+  const [hasStarted, setHasStarted] = useState(true) // Start with scanner visible by default
+  const [domain, setDomain] = useState("BoutiqueStays.com")
+
   // Scanner state
   const [currentPhase, setCurrentPhase] = useState(0)
   const [phaseProgress, setPhaseProgress] = useState(0)
   const [overallProgress, setOverallProgress] = useState(0)
+  const currentPhaseRef = useRef(0)
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentPhaseRef.current = currentPhase
+  }, [currentPhase])
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false)
@@ -222,15 +234,16 @@ export default function ScannerDevPage() {
         const newProgress = prev + increment
 
         if (newProgress >= 100) {
-          // Move to next phase
-          setCurrentPhase(p => {
-            if (p >= customPhases.length - 1) {
-              setIsPlaying(false)
-              return p
-            }
-            return p + 1
-          })
-          return 0
+          const isLastPhase = currentPhaseRef.current >= customPhases.length - 1
+          if (isLastPhase) {
+            // Last phase complete - stay at 100%
+            setIsPlaying(false)
+            return 100
+          } else {
+            // Move to next phase
+            setCurrentPhase(p => p + 1)
+            return 0
+          }
         }
         return newProgress
       })
@@ -244,11 +257,36 @@ export default function ScannerDevPage() {
     setOverallProgress(calculateOverall(currentPhase, phaseProgress))
   }, [currentPhase, phaseProgress, calculateOverall])
 
+  const handleStartScan = () => {
+    setHasStarted(true)
+    setIsPlaying(true)
+  }
+
   const handleReset = () => {
     setIsPlaying(false)
     setCurrentPhase(0)
     setPhaseProgress(0)
     setOverallProgress(0)
+    if (includeForm) {
+      setHasStarted(false)
+    }
+  }
+
+  // When includeForm is toggled, reset the view appropriately
+  const handleToggleIncludeForm = () => {
+    const newValue = !includeForm
+    setIncludeForm(newValue)
+    if (newValue) {
+      // Turning on form - show the form
+      setHasStarted(false)
+      setIsPlaying(false)
+      setCurrentPhase(0)
+      setPhaseProgress(0)
+      setOverallProgress(0)
+    } else {
+      // Turning off form - show the scanner
+      setHasStarted(true)
+    }
   }
 
   const handlePhaseClick = (index: number) => {
@@ -296,21 +334,44 @@ export default function ScannerDevPage() {
         className="flex flex-col items-center px-4 pt-12 pb-80"
         style={{ minHeight: "calc(100vh - 56px)" }}
       >
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl font-normal mb-2 text-foreground tracking-tight">
-            Analyzing example-domain.com
-          </h2>
-          <p className="text-muted-foreground">
-            {customPhases[currentPhase]?.description || "Starting..."}
-          </p>
-        </div>
+        {includeForm && !hasStarted ? (
+          /* Form state - show hero section */
+          <div className="w-full max-w-4xl">
+            <HeroSection
+              domain={domain}
+              setDomain={setDomain}
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (domain.trim()) {
+                  handleStartScan()
+                }
+              }}
+              isLoading={false}
+              error=""
+            />
+          </div>
+        ) : (
+          /* Scanner state */
+          <>
+            <div className="mb-8 text-center">
+              <p className="text-muted-foreground">
+                {currentPhase >= customPhases.length - 1 && phaseProgress >= 100
+                  ? "Audit complete!"
+                  : customPhases[currentPhase]?.description || "Starting..."}
+              </p>
+            </div>
 
-        <MultiPhaseScanner
-          currentPhase={currentPhase}
-          phaseProgress={phaseProgress}
-          overallProgress={overallProgress}
-          phases={customPhases}
-        />
+            <MultiPhaseScanner
+              currentPhase={currentPhase}
+              phaseProgress={phaseProgress}
+              overallProgress={overallProgress}
+              phases={customPhases}
+              domain={domain || "BoutiqueStays.com"}
+              finalScore={72}
+              onViewReport={() => alert("View Report clicked! In production, this navigates to the report.")}
+            />
+          </>
+        )}
       </div>
 
         {/* Control Panel */}
@@ -388,6 +449,18 @@ export default function ScannerDevPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Include form toggle */}
+              <button
+                onClick={handleToggleIncludeForm}
+                className={`ml-4 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  includeForm
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {includeForm ? "Form: On" : "Form: Off"}
+              </button>
             </div>
 
             {/* Phase Selector */}
