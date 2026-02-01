@@ -81,7 +81,7 @@ export function MultiPhaseScanner({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Domain label - scanning text + gradient domain */}
+      {/* Domain label - gradient text style */}
       {domain && (
         <div className="flex items-center justify-center gap-2 mb-6">
           <span className="text-xl text-muted-foreground">Scanning</span>
