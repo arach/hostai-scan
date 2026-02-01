@@ -137,61 +137,9 @@ export function MultiPhaseScanner({
         </div>
       </div>
 
-      {/* Main scanner container */}
+      {/* Main scanner container - just the phase animation with its own header/footer */}
       <div className="relative overflow-hidden rounded-2xl bg-card/90 backdrop-blur-xl border border-border shadow-2xl">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-destructive/80" />
-                <div className="w-3 h-3 rounded-full bg-warning/80" />
-                <div className="w-3 h-3 rounded-full bg-accent/80" />
-              </div>
-              <span className="text-sm font-medium text-foreground">{phase.name}</span>
-            </div>
-            <div className="text-xs font-mono text-muted-foreground">
-              Phase {currentPhase + 1}/{phases.length}
-            </div>
-          </div>
-
-          {/* Phase-specific animation */}
-          <PhaseAnimation phase={phase} progress={phaseProgress} />
-
-          {/* Phase description */}
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="w-2 h-2 rounded-full bg-accent" />
-                <div className="absolute inset-0 w-2 h-2 rounded-full bg-accent animate-ping" />
-              </div>
-              <span className="text-sm font-medium text-foreground">{phase.description}</span>
-            </div>
-            <span className="text-xs font-mono text-muted-foreground">{phaseProgress}%</span>
-          </div>
-
-          {/* Phase progress bar */}
-          <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${phaseProgress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Overall progress footer */}
-        <div className="border-t border-border bg-muted/30 px-6 py-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Overall Progress</span>
-            <span className="font-mono text-accent font-semibold">{overallProgress}%</span>
-          </div>
-          <div className="mt-2 h-1 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${overallProgress}%` }}
-            />
-          </div>
-        </div>
+        <PhaseAnimation phase={phase} progress={phaseProgress} />
       </div>
     </div>
   )
@@ -232,96 +180,75 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
     { name: "archive-data", type: "file", indent: 1, icon: "~" },
   ], [])
 
-  // Calculate which items are complete vs current vs pending
   const completedCount = Math.floor((progress / 100) * treeItems.length)
   const currentIndex = Math.min(completedCount, treeItems.length - 1)
   const isAllComplete = progress >= 95
 
   return (
-    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
+    <div className="flex flex-col h-72">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border/50">
-        <Globe className="h-4 w-4 text-accent" />
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+        </div>
+        <Globe className="h-3.5 w-3.5 text-muted-foreground ml-2" />
         <span className="text-xs font-mono text-muted-foreground">domain-scanner</span>
-        <span className="text-xs text-muted-foreground ml-auto font-mono tabular-nums">
-          {completedCount}/{treeItems.length} endpoints
-        </span>
       </div>
 
-      {/* All items visible from start - skeleton → active → complete */}
-      <div className="space-y-1.5 font-mono text-sm">
-        {treeItems.map((item, i) => {
-          const isComplete = isAllComplete || i < completedCount
-          const isCurrent = !isAllComplete && i === currentIndex
-          const isPending = !isAllComplete && i > currentIndex
+      {/* Body - scrollable content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="space-y-1 font-mono text-sm">
+          {treeItems.map((item, i) => {
+            const isComplete = isAllComplete || i < completedCount
+            const isCurrent = !isAllComplete && i === currentIndex
+            const isVisible = isAllComplete || i <= currentIndex
 
-          return (
-            <div
-              key={item.name}
-              className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
-                isCurrent
-                  ? "bg-accent text-white"
-                  : isComplete
-                    ? "bg-transparent"
-                    : "bg-transparent"
-              }`}
-              style={{ marginLeft: item.indent * 20 }}
-            >
-              {/* Icon */}
-              <div className={`w-4 h-4 flex items-center justify-center text-xs transition-colors duration-300 ${
-                isCurrent ? "text-white" : isComplete ? "text-accent" : "text-muted-foreground/30"
-              }`}>
-                {item.icon}
-              </div>
+            if (!isVisible) return null
 
-              {/* Name - show skeleton for pending */}
-              {isPending ? (
-                <div className="h-3 w-20 rounded bg-muted/50" />
-              ) : (
-                <span className={`text-xs transition-colors duration-300 ${
-                  isCurrent
-                    ? "text-white font-medium"
-                    : isComplete
-                      ? item.type === "folder" ? "text-accent font-medium" : "text-foreground"
-                      : "text-muted-foreground/40"
+            return (
+              <div
+                key={item.name}
+                className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
+                  isCurrent ? "bg-accent text-white" : ""
+                }`}
+                style={{ marginLeft: item.indent * 20 }}
+              >
+                <div className={`w-4 h-4 flex items-center justify-center text-xs ${
+                  isCurrent ? "text-white" : isComplete ? "text-accent" : "text-muted-foreground"
+                }`}>
+                  {item.icon}
+                </div>
+                <span className={`text-xs ${
+                  isCurrent ? "text-white font-medium"
+                    : isComplete ? (item.type === "folder" ? "text-accent font-medium" : "text-foreground")
+                    : "text-muted-foreground"
                 }`}>
                   {item.name}
                 </span>
-              )}
-
-              {/* Status */}
-              <div className="ml-auto">
-                {isCurrent && (
-                  <span className="text-[10px] text-white/80 animate-pulse">scanning...</span>
-                )}
-                {isComplete && (
-                  <span className="text-[10px] text-accent">✓</span>
-                )}
-                {isPending && (
-                  <div className="h-2 w-8 rounded bg-muted/30" />
-                )}
+                <div className="ml-auto">
+                  {isCurrent && <span className="text-[10px] text-white/80 animate-pulse">scanning...</span>}
+                  {isComplete && <span className="text-[10px] text-accent">✓</span>}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="absolute bottom-4 left-4 right-4">
-        <div className="flex items-center gap-1">
-          {treeItems.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                isAllComplete || i < completedCount ? "bg-accent" : i === currentIndex ? "bg-accent/50" : "bg-muted"
-              }`}
-            />
-          ))}
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+          </div>
+          <span className="text-xs text-muted-foreground">{phase.description}</span>
         </div>
-        <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-          <span>Endpoints discovered</span>
-          <span className="font-mono tabular-nums">{completedCount}/{treeItems.length}</span>
-        </div>
+        <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+          {completedCount}/{treeItems.length}
+        </span>
       </div>
     </div>
   )
@@ -356,21 +283,28 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
     )
   }, [progress, barConfig])
 
+  const completedCount = barConfig.filter((_, i) => barWidths[i] >= 100).length
+
   return (
-    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border flex flex-col">
-      {/* Header row with time markers */}
-      <div className="flex items-center px-3 py-2 border-b border-border/50 bg-muted/30">
-        <span className="text-[10px] text-muted-foreground font-medium w-24">Resource</span>
-        <div className="flex-1 flex justify-between text-[10px] text-muted-foreground font-mono">
+    <div className="flex flex-col h-72">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+        </div>
+        <Zap className="h-3.5 w-3.5 text-muted-foreground ml-2" />
+        <span className="text-xs font-mono text-muted-foreground">performance-audit</span>
+        <div className="flex-1 flex justify-end gap-6 text-[10px] text-muted-foreground font-mono">
           <span>0ms</span>
           <span>250ms</span>
           <span>500ms</span>
         </div>
-        <span className="text-[10px] text-muted-foreground w-10 text-right">Time</span>
       </div>
 
-      {/* Waterfall chart body */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+      {/* Body - waterfall chart */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
         {barConfig.map((bar, i) => {
           const width = barWidths[i] || 0
           const startPercent = (bar.startDelay / 100) * 90
@@ -382,11 +316,9 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
                 {bar.id.replace(/\.(ts|tsx|json)$/, "")}
               </span>
               <div className="flex-1 h-3 bg-muted/30 rounded overflow-hidden relative">
-                {/* Grid lines */}
                 {[0, 25, 50, 75, 100].map(pos => (
-                  <div key={pos} className="absolute top-0 bottom-0 w-px bg-border/40" style={{ left: `${pos}%` }} />
+                  <div key={pos} className="absolute top-0 bottom-0 w-px bg-border/30" style={{ left: `${pos}%` }} />
                 ))}
-                {/* Bar */}
                 <div
                   className={`absolute top-0 bottom-0 ${bar.color} rounded transition-all duration-200 ease-out`}
                   style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
@@ -400,16 +332,18 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
         })}
       </div>
 
-      {/* Status footer */}
-      <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 bg-muted/30">
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
         <div className="flex items-center gap-2">
           <div className="relative">
             <div className="w-1.5 h-1.5 rounded-full bg-accent" />
             <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
           </div>
-          <span className="text-[10px] font-mono text-muted-foreground">analyzing resources...</span>
+          <span className="text-xs text-muted-foreground">{phase.description}</span>
         </div>
-        <span className="text-[10px] font-mono text-muted-foreground">{barConfig.filter((_, i) => barWidths[i] >= 100).length}/{barConfig.length}</span>
+        <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+          {completedCount}/{barConfig.length}
+        </span>
       </div>
     </div>
   )
@@ -420,7 +354,6 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
 // ============================================================================
 
 function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number }) {
-  // SEO metrics with simulated results (pass/warning/issue)
   const seoMetrics = useMemo(() => [
     { name: "Meta Tags", result: "pass" },
     { name: "Schema", result: "warning" },
@@ -433,93 +366,88 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
     { name: "Alt Text", result: "warning" },
   ] as const, [])
 
-  // Calculate which item is currently being scanned based on progress
   const completedCount = Math.floor((progress / 100) * seoMetrics.length)
   const currentIndex = Math.min(completedCount, seoMetrics.length - 1)
+  const isAllComplete = progress >= 95
 
   return (
-    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
+    <div className="flex flex-col h-72">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
-        <Search className="h-4 w-4 text-accent" />
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+        </div>
+        <Search className="h-3.5 w-3.5 text-muted-foreground ml-2" />
         <span className="text-xs font-mono text-muted-foreground">seo-analyzer</span>
-        <span className="text-xs text-muted-foreground ml-auto font-mono tabular-nums">
-          {completedCount}/{seoMetrics.length} checks
-        </span>
       </div>
 
-      {/* Grid of metrics */}
-      <div className="grid grid-cols-3 gap-2">
-        {seoMetrics.map((metric, i) => {
-          const isComplete = i < completedCount
-          const isScanning = i === currentIndex && completedCount < seoMetrics.length
-          const isPending = i > currentIndex
+      {/* Body - metrics grid */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="grid grid-cols-3 gap-2">
+          {seoMetrics.map((metric, i) => {
+            const isComplete = isAllComplete || i < completedCount
+            const isScanning = !isAllComplete && i === currentIndex
 
-          // Result colors
-          const resultColor = metric.result === "pass" ? "text-accent"
-            : metric.result === "warning" ? "text-warning"
-            : "text-destructive"
-          const resultBg = metric.result === "pass" ? "bg-accent/10"
-            : metric.result === "warning" ? "bg-warning/10"
-            : "bg-destructive/10"
-          const resultIcon = metric.result === "pass" ? "✓"
-            : metric.result === "warning" ? "!"
-            : "×"
+            const resultColor = metric.result === "pass" ? "text-accent"
+              : metric.result === "warning" ? "text-warning"
+              : "text-destructive"
+            const resultBg = metric.result === "pass" ? "bg-accent/10"
+              : metric.result === "warning" ? "bg-warning/10"
+              : "bg-destructive/10"
+            const resultIcon = metric.result === "pass" ? "✓"
+              : metric.result === "warning" ? "!"
+              : "×"
 
-          return (
-            <div
-              key={metric.name}
-              className={`relative px-2.5 py-2 rounded-md border transition-all duration-200 ${
-                isScanning
-                  ? "bg-accent text-white border-accent ring-2 ring-accent/30"
-                  : isComplete
-                    ? `${resultBg} border-border/50`
-                    : "bg-muted/20 border-border/30"
-              }`}
-            >
-              {/* Result indicator (top-right) */}
-              {isComplete && (
-                <div className={`absolute top-1 right-1.5 text-[9px] font-bold ${resultColor}`}>
-                  {resultIcon}
-                </div>
-              )}
-              {isScanning && (
-                <div className="absolute top-1 right-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                </div>
-              )}
-
-              {/* Metric name */}
-              <div className={`text-[10px] font-medium ${
-                isScanning ? "text-white" : isComplete ? resultColor : "text-muted-foreground/50"
-              }`}>
-                {metric.name}
-              </div>
-
-              {/* Status text */}
-              <div className="mt-0.5">
-                {isScanning && (
-                  <span className="text-[8px] text-white/80">scanning...</span>
-                )}
+            return (
+              <div
+                key={metric.name}
+                className={`relative px-2.5 py-2 rounded-md border transition-all duration-200 ${
+                  isScanning
+                    ? "bg-accent text-white border-accent ring-2 ring-accent/30"
+                    : isComplete
+                      ? `${resultBg} border-border/50`
+                      : "bg-muted/20 border-border/30"
+                }`}
+              >
                 {isComplete && (
-                  <span className={`text-[8px] ${resultColor} opacity-70`}>
-                    {metric.result}
-                  </span>
+                  <div className={`absolute top-1 right-1.5 text-[9px] font-bold ${resultColor}`}>
+                    {resultIcon}
+                  </div>
                 )}
-                {isPending && (
-                  <span className="text-[8px] text-muted-foreground/30">pending</span>
+                {isScanning && (
+                  <div className="absolute top-1 right-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  </div>
                 )}
+                <div className={`text-[10px] font-medium ${
+                  isScanning ? "text-white" : isComplete ? resultColor : "text-muted-foreground/40"
+                }`}>
+                  {metric.name}
+                </div>
+                <div className="mt-0.5">
+                  {isScanning && <span className="text-[8px] text-white/80">scanning...</span>}
+                  {isComplete && <span className={`text-[8px] ${resultColor} opacity-70`}>{metric.result}</span>}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+          </div>
+          <span className="text-xs text-muted-foreground">{phase.description}</span>
+        </div>
         <div className="flex gap-3 text-[9px] text-muted-foreground">
           <span className="flex items-center gap-1"><span className="text-accent font-bold">✓</span> Pass</span>
-          <span className="flex items-center gap-1"><span className="text-warning font-bold">!</span> Warning</span>
+          <span className="flex items-center gap-1"><span className="text-warning font-bold">!</span> Warn</span>
           <span className="flex items-center gap-1"><span className="text-destructive font-bold">×</span> Issue</span>
         </div>
       </div>
@@ -559,66 +487,42 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
     }
   }, [progress, highlights])
 
+  const checksComplete = Math.floor(progress / 100 * 8)
+
   return (
-    <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
-      {/* Devices - bottom aligned */}
-      <div className="flex items-end justify-center gap-8 h-48">
+    <div className="flex flex-col h-72">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+        </div>
+        <Eye className="h-3.5 w-3.5 text-muted-foreground ml-2" />
+        <span className="text-xs font-mono text-muted-foreground">ui-evaluator</span>
+      </div>
+
+      {/* Body - device previews */}
+      <div className="flex-1 flex items-end justify-center gap-8 p-4 pb-2">
         {/* Desktop */}
         <div className="flex flex-col items-center">
-          <div className="relative w-48 h-32 rounded-lg border-2 border-border bg-card overflow-hidden">
-            <div className="h-4 bg-muted border-b border-border flex items-center px-2 gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-destructive/60" />
-              <div className="w-1.5 h-1.5 rounded-full bg-warning/60" />
-              <div className="w-1.5 h-1.5 rounded-full bg-accent/60" />
+          <div className="relative w-44 h-28 rounded-lg border-2 border-border bg-card overflow-hidden">
+            <div className="h-3 bg-muted border-b border-border flex items-center px-1.5 gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-destructive/60" />
+              <div className="w-1 h-1 rounded-full bg-warning/60" />
+              <div className="w-1 h-1 rounded-full bg-accent/60" />
             </div>
             <div className="relative h-full">
-              <div className="p-2 space-y-1">
-                <div className="h-2 w-16 bg-muted rounded" />
-                <div className="h-1 w-24 bg-muted/50 rounded" />
-                <div className="h-1 w-20 bg-muted/50 rounded" />
-                <div className="h-6 w-full bg-muted/30 rounded mt-2" />
+              <div className="p-1.5 space-y-0.5">
+                <div className="h-1.5 w-12 bg-muted rounded" />
+                <div className="h-0.5 w-20 bg-muted/50 rounded" />
+                <div className="h-5 w-full bg-muted/30 rounded mt-1" />
               </div>
               <div
-                className="absolute left-0 right-0 h-1 bg-gradient-to-b from-accent to-transparent"
+                className="absolute left-0 right-0 h-0.5 bg-gradient-to-b from-accent to-transparent"
                 style={{ top: `${scanProgress.desktop}%`, transition: "top 0.1s linear" }}
               />
               {highlights.slice(0, 3).map((h, i) => (
-                <div
-                  key={i}
-                  className={`absolute w-3 h-3 rounded-full border-2 ${
-                    h.type === "warning" ? "border-warning bg-warning/20" :
-                    h.type === "destructive" ? "border-destructive bg-destructive/20" :
-                    "border-accent bg-accent/20"
-                  }`}
-                  style={{ left: `${h.x}%`, top: `${h.y}%` }}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="mt-2 text-center">
-            <div className="text-[10px] font-medium text-muted-foreground">Desktop</div>
-            <div className="text-[9px] text-muted-foreground/60 font-mono">1440 × 900</div>
-          </div>
-        </div>
-
-        {/* Mobile */}
-        <div className="flex flex-col items-center">
-          <div className="relative w-20 h-40 rounded-xl border-2 border-border bg-card overflow-hidden">
-            <div className="h-3 bg-muted border-b border-border flex items-center justify-center">
-              <div className="w-6 h-1 rounded-full bg-border" />
-            </div>
-            <div className="relative h-full">
-              <div className="p-1.5 space-y-1">
-                <div className="h-1.5 w-10 bg-muted rounded" />
-                <div className="h-1 w-12 bg-muted/50 rounded" />
-                <div className="h-4 w-full bg-muted/30 rounded mt-1" />
-                <div className="h-1 w-8 bg-muted/50 rounded" />
-              </div>
-              <div
-                className="absolute left-0 right-0 h-1 bg-gradient-to-b from-accent to-transparent"
-                style={{ top: `${scanProgress.mobile}%`, transition: "top 0.1s linear" }}
-              />
-              {highlights.slice(3, 6).map((h, i) => (
                 <div
                   key={i}
                   className={`absolute w-2 h-2 rounded-full border ${
@@ -631,21 +535,58 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
               ))}
             </div>
           </div>
-          <div className="mt-2 text-center">
-            <div className="text-[10px] font-medium text-muted-foreground">Mobile</div>
-            <div className="text-[9px] text-muted-foreground/60 font-mono">iPhone 16 Pro</div>
+          <div className="mt-1.5 text-center">
+            <div className="text-[9px] text-muted-foreground font-mono">1440 × 900</div>
+          </div>
+        </div>
+
+        {/* Mobile */}
+        <div className="flex flex-col items-center">
+          <div className="relative w-16 h-32 rounded-xl border-2 border-border bg-card overflow-hidden">
+            <div className="h-2 bg-muted border-b border-border flex items-center justify-center">
+              <div className="w-4 h-0.5 rounded-full bg-border" />
+            </div>
+            <div className="relative h-full">
+              <div className="p-1 space-y-0.5">
+                <div className="h-1 w-8 bg-muted rounded" />
+                <div className="h-0.5 w-10 bg-muted/50 rounded" />
+                <div className="h-3 w-full bg-muted/30 rounded mt-0.5" />
+              </div>
+              <div
+                className="absolute left-0 right-0 h-0.5 bg-gradient-to-b from-accent to-transparent"
+                style={{ top: `${scanProgress.mobile}%`, transition: "top 0.1s linear" }}
+              />
+              {highlights.slice(3, 6).map((h, i) => (
+                <div
+                  key={i}
+                  className={`absolute w-1.5 h-1.5 rounded-full border ${
+                    h.type === "warning" ? "border-warning bg-warning/20" :
+                    h.type === "destructive" ? "border-destructive bg-destructive/20" :
+                    "border-accent bg-accent/20"
+                  }`}
+                  style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="mt-1.5 text-center">
+            <div className="text-[9px] text-muted-foreground font-mono">iPhone 16</div>
           </div>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
-        <div className="flex gap-3 text-[9px] text-muted-foreground">
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-accent" /> Pass</span>
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-warning" /> Warning</span>
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-destructive" /> Issue</span>
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+          </div>
+          <span className="text-xs text-muted-foreground">{phase.description}</span>
         </div>
-        <span className="text-[9px] font-mono text-muted-foreground tabular-nums">{Math.floor(progress / 100 * 8)}/8 checks</span>
+        <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+          {checksComplete}/8
+        </span>
       </div>
     </div>
   )
@@ -669,18 +610,15 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
     { id: "ux", label: "User Experience", target: 69, weight: 5 },
   ], [])
 
-  // Smooth progress - how many rubrics are complete vs in progress
   const completedCount = Math.floor((progress / 100) * scoreRubrics.length)
-  const isAllComplete = progress >= 95 // Consider complete at 95%+
+  const isAllComplete = progress >= 95
 
-  // Calculate scores with smooth fill
   const scores = useMemo(() => {
     const result: Record<string, number> = {}
     scoreRubrics.forEach((rubric, i) => {
       if (isAllComplete || i < completedCount) {
         result[rubric.id] = rubric.target
       } else if (i === completedCount) {
-        // Currently filling this one
         const itemProgress = (progress / 100 * scoreRubrics.length) - completedCount
         result[rubric.id] = Math.floor(rubric.target * itemProgress)
       } else {
@@ -703,31 +641,38 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
   const getBarColor = (score: number) => score >= 80 ? "bg-accent" : score >= 60 ? "bg-warning" : "bg-destructive"
 
   return (
-    <div className="relative h-64 rounded-lg bg-background/50 overflow-hidden border border-border/50 p-3">
-      <div className="flex gap-3 h-full">
-        <div className="flex-1 overflow-hidden">
-          <div className="text-[10px] text-muted-foreground mb-2 flex justify-between px-2">
-            <span>Rubric</span>
-            <span>Score</span>
-          </div>
-          <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1">
+    <div className="flex flex-col h-72">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent/60" />
+        </div>
+        <Calculator className="h-3.5 w-3.5 text-muted-foreground ml-2" />
+        <span className="text-xs font-mono text-muted-foreground">score-calculator</span>
+      </div>
+
+      {/* Body - scores + gauge */}
+      <div className="flex-1 flex gap-3 p-3 overflow-hidden">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div className="space-y-1">
             {scoreRubrics.map((rubric, i) => {
               const score = scores[rubric.id] || 0
               const isComplete = isAllComplete || i < completedCount
               const isCurrent = !isAllComplete && i === completedCount
-              const isPending = !isAllComplete && i > completedCount
 
               return (
-                <div key={rubric.id} className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
+                <div key={rubric.id} className={`flex items-center gap-2 py-1 px-2 rounded-md transition-all duration-300 ${
                   isCurrent ? "bg-accent text-white" : ""
                 }`}>
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors duration-300 ${
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                     isCurrent ? "bg-white" : isComplete ? getBarColor(score) : "bg-muted"
                   }`} />
-                  <span className={`text-[10px] w-20 truncate transition-colors duration-300 ${
-                    isCurrent ? "text-white font-medium" : isComplete ? "text-foreground" : "text-muted-foreground/50"
+                  <span className={`text-[10px] w-20 truncate ${
+                    isCurrent ? "text-white font-medium" : isComplete ? "text-foreground" : "text-muted-foreground/40"
                   }`}>{rubric.label}</span>
-                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden transition-colors duration-300 ${
+                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${
                     isCurrent ? "bg-white/30" : "bg-muted/50"
                   }`}>
                     <div
@@ -737,31 +682,19 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
                       style={{ width: `${score}%` }}
                     />
                   </div>
-                  <span className={`text-[10px] font-mono font-medium w-6 text-right tabular-nums transition-colors duration-300 ${
+                  <span className={`text-[10px] font-mono font-medium w-6 text-right tabular-nums ${
                     isCurrent ? "text-white" : score > 0 ? getScoreColor(score) : "text-muted-foreground/30"
                   }`}>
                     {score > 0 ? score : "—"}
                   </span>
-                  <span className={`text-[8px] w-5 text-right transition-colors duration-300 ${
-                    isCurrent ? "text-white/70" : "text-muted-foreground/40"
-                  }`}>{rubric.weight}%</span>
                 </div>
               )
             })}
           </div>
         </div>
 
-        <div className="w-28 flex flex-col items-center justify-center border-l border-border/50 pl-3">
-          <svg viewBox="0 0 100 100" className="w-20 h-20">
-            <defs>
-              <filter id="score-glow-scanner">
-                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
+        <div className="w-24 flex flex-col items-center justify-center border-l border-border/50 pl-3">
+          <svg viewBox="0 0 100 100" className="w-16 h-16">
             <circle cx="50" cy="50" r="40" fill="none" stroke="var(--color-muted)" strokeWidth="6" />
             <circle
               cx="50" cy="50" r="40" fill="none"
@@ -770,23 +703,26 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
               strokeDasharray={`${2 * Math.PI * 40}`}
               strokeDashoffset={`${2 * Math.PI * 40 * (1 - overallScore / 100)}`}
               transform="rotate(-90 50 50)"
-              filter="url(#score-glow-scanner)"
               style={{ transition: "stroke-dashoffset 0.3s ease" }}
             />
-            <text x="50" y="46" textAnchor="middle" className="fill-foreground font-bold" style={{ fontSize: "22px" }}>{overallScore}</text>
-            <text x="50" y="62" textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: "8px" }}>OVERALL</text>
+            <text x="50" y="54" textAnchor="middle" className="fill-foreground font-bold" style={{ fontSize: "20px" }}>{overallScore}</text>
           </svg>
-          <span className="text-[9px] text-muted-foreground mt-1">Weighted Score</span>
-          {progress < 100 && (
-            <div className="flex items-center gap-1 mt-2">
-              <div className="flex gap-0.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                ))}
-              </div>
-            </div>
-          )}
+          <span className="text-[9px] text-muted-foreground mt-1">Overall</span>
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+          </div>
+          <span className="text-xs text-muted-foreground">{phase.description}</span>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+          {completedCount}/{scoreRubrics.length}
+        </span>
       </div>
     </div>
   )
