@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Calendar,
+  Home,
 } from "lucide-react"
 
 interface ReportVariantBProps {
@@ -227,14 +228,24 @@ export function ReportVariantB({ result, className }: ReportVariantBProps) {
   return (
     <div className={cn("min-h-screen bg-gradient-to-b from-gray-50 to-gray-100/30", className)}>
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-6 py-4">
+      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-100/50">
+        <div className="max-w-5xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-medium text-gray-900">Website Audit</h1>
-              <p className="text-sm text-gray-500">{result.domain}</p>
+            <div className="flex items-center gap-4">
+              <a
+                href="/"
+                className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Back to GetHost.AI"
+              >
+                <Home className="w-4 h-4" />
+              </a>
+              <div className="h-4 w-px bg-gray-200" />
+              <div>
+                <h1 className="text-sm font-medium text-gray-900">Website Audit</h1>
+                <p className="text-xs text-gray-500">{result.domain}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 text-sm text-gray-400">
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
               <Calendar className="w-3.5 h-3.5" />
               {formattedDate}
             </div>

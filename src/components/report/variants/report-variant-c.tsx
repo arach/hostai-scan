@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Layers,
   ArrowUpRight,
+  Home,
 } from "lucide-react"
 
 interface ReportVariantCProps {
@@ -359,6 +360,14 @@ export function ReportVariantC({ result, className }: ReportVariantCProps) {
       <header className="bg-white/70 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
+            <a
+              href="/"
+              className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              title="Back to GetHost.AI"
+            >
+              <Home className="w-4 h-4" />
+            </a>
+            <div className="h-4 w-px bg-slate-200" />
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-cyan-600 rounded-md flex items-center justify-center">
                 <BarChart3 className="w-3.5 h-3.5 text-white" />

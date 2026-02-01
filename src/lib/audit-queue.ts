@@ -93,7 +93,7 @@ export async function updateJob(id: string, updates: Partial<AuditJob>): Promise
   await ensureJobsTable();
 
   const setClauses: string[] = [];
-  const args: unknown[] = [];
+  const args: (string | number | null)[] = [];
 
   if (updates.status !== undefined) {
     setClauses.push("status = ?");
