@@ -14,100 +14,171 @@ const PHASES = [
 ]
 
 // ============================================================================
-// Minimal Dots Progress Indicator
+// Progress Indicator Variants
 // ============================================================================
-function DotsProgress({ currentPhase }: { currentPhase: number }) {
+
+// A: Current - Progress Track (what we use in production)
+function ProgressTrack({ currentPhase }: { currentPhase: number }) {
+  return (
+    <div className="w-full max-w-md">
+      <div className="relative">
+        <div className="absolute top-3 left-3 right-3 h-px bg-border" />
+        <div
+          className="absolute top-3 left-3 h-px bg-accent transition-all duration-300 ease-out"
+          style={{
+            width: PHASES.length > 1
+              ? `calc(${(currentPhase / (PHASES.length - 1)) * 100}% - 24px)`
+              : '0%'
+          }}
+        />
+        <div className="relative flex justify-between">
+          {PHASES.map((p, i) => {
+            const Icon = p.icon
+            const isComplete = i < currentPhase
+            const isCurrent = i === currentPhase
+            return (
+              <div key={p.id} className="flex flex-col items-center">
+                <div className={`
+                  relative w-6 h-6 rounded-full flex items-center justify-center
+                  transition-all duration-300 ease-out z-10
+                  ${isComplete
+                    ? "bg-accent text-white"
+                    : isCurrent
+                      ? "bg-accent text-white ring-4 ring-accent/20"
+                      : "bg-card text-muted-foreground border border-border"
+                  }
+                `}>
+                  {isComplete ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
+                  {isCurrent && <div className="absolute inset-0 rounded-full bg-accent animate-ping opacity-30" />}
+                </div>
+                <span className={`mt-2 text-[10px] font-medium text-center whitespace-nowrap transition-all duration-300
+                  ${isCurrent ? "text-foreground" : isComplete ? "text-accent" : "text-muted-foreground"}
+                `}>{p.name.split(' ')[0]}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// B: Minimal Dots
+function ProgressDots({ currentPhase }: { currentPhase: number }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-2">
         {PHASES.map((p, i) => {
           const isComplete = i < currentPhase
           const isCurrent = i === currentPhase
-
           return (
             <div key={p.id} className="relative">
-              <div className={`
-                w-2 h-2 rounded-full transition-all duration-300
+              <div className={`w-2 h-2 rounded-full transition-all duration-300
                 ${isComplete ? "bg-accent" : isCurrent ? "bg-accent" : "bg-muted"}
               `} />
-              {isCurrent && (
-                <div className="absolute inset-0 w-2 h-2 rounded-full bg-accent animate-ping opacity-50" />
-              )}
+              {isCurrent && <div className="absolute inset-0 w-2 h-2 rounded-full bg-accent animate-ping opacity-50" />}
             </div>
           )
         })}
       </div>
-      <span className="text-sm font-medium text-foreground">
-        {PHASES[currentPhase]?.name}
+      <span className="text-sm font-medium text-foreground">{PHASES[currentPhase]?.name}</span>
+    </div>
+  )
+}
+
+// ============================================================================
+// Domain Label Variants
+// ============================================================================
+
+function DomainLabelA({ domain }: { domain: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <span className="text-xl text-muted-foreground">Scanning</span>
+      <span className="text-xl font-semibold bg-gradient-to-r from-violet-500 to-indigo-400 bg-clip-text text-transparent">
+        {domain}
+      </span>
+    </div>
+  )
+}
+
+function DomainLabelB({ domain }: { domain: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <span className="text-xl text-muted-foreground">Scanning</span>
+      <span className="text-xl font-semibold text-foreground relative">
+        {domain}
+        <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full" />
+      </span>
+    </div>
+  )
+}
+
+function DomainLabelC({ domain }: { domain: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <span className="text-xl text-muted-foreground">Scanning</span>
+      <span
+        className="text-xl font-semibold text-foreground"
+        style={{ textShadow: '0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)' }}
+      >
+        {domain}
+      </span>
+    </div>
+  )
+}
+
+function DomainLabelD({ domain }: { domain: string }) {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      <span className="text-xl text-muted-foreground">Scanning</span>
+      <span className="px-4 py-1.5 rounded-lg bg-foreground/10 text-foreground font-semibold text-lg">
+        {domain}
+      </span>
+    </div>
+  )
+}
+
+function DomainLabelE({ domain }: { domain: string }) {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      <span className="text-xl text-muted-foreground">Scanning</span>
+      <span className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-violet-500/20 to-indigo-400/20 border border-violet-500/30 text-foreground font-semibold text-lg">
+        {domain}
       </span>
     </div>
   )
 }
 
 // ============================================================================
-// Domain Label Treatments
+// Toggle Button Group
 // ============================================================================
-function DomainLabelTreatments({ domain }: { domain: string }) {
+function ToggleGroup({
+  options,
+  selected,
+  onChange,
+  descriptions
+}: {
+  options: string[]
+  selected: string
+  onChange: (val: string) => void
+  descriptions?: Record<string, string>
+}) {
   return (
-    <div className="space-y-6">
-      {/* Option A: Gradient text */}
-      <div className="p-6 rounded-xl border border-border bg-card">
-        <div className="text-xs text-muted-foreground mb-3 font-mono">A: Gradient Text</div>
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-xl text-muted-foreground">Scanning</span>
-          <span className="text-xl font-semibold bg-gradient-to-r from-violet-500 to-indigo-400 bg-clip-text text-transparent">
-            {domain}
-          </span>
-        </div>
-      </div>
-
-      {/* Option B: Underline accent */}
-      <div className="p-6 rounded-xl border border-border bg-card">
-        <div className="text-xs text-muted-foreground mb-3 font-mono">B: Underline Accent</div>
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-xl text-muted-foreground">Scanning</span>
-          <span className="text-xl font-semibold text-foreground relative">
-            {domain}
-            <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full" />
-          </span>
-        </div>
-      </div>
-
-      {/* Option C: Subtle glow */}
-      <div className="p-6 rounded-xl border border-border bg-card">
-        <div className="text-xs text-muted-foreground mb-3 font-mono">C: Subtle Glow</div>
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-xl text-muted-foreground">Scanning</span>
-          <span
-            className="text-xl font-semibold text-foreground"
-            style={{ textShadow: '0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)' }}
-          >
-            {domain}
-          </span>
-        </div>
-      </div>
-
-      {/* Option D: Pill badge */}
-      <div className="p-6 rounded-xl border border-border bg-card">
-        <div className="text-xs text-muted-foreground mb-3 font-mono">D: Pill Badge</div>
-        <div className="flex items-center justify-center gap-3">
-          <span className="text-xl text-muted-foreground">Scanning</span>
-          <span className="px-4 py-1.5 rounded-lg bg-foreground/10 text-foreground font-semibold text-lg">
-            {domain}
-          </span>
-        </div>
-      </div>
-
-      {/* Option E: Gradient pill */}
-      <div className="p-6 rounded-xl border border-border bg-card">
-        <div className="text-xs text-muted-foreground mb-3 font-mono">E: Gradient Pill</div>
-        <div className="flex items-center justify-center gap-3">
-          <span className="text-xl text-muted-foreground">Scanning</span>
-          <span className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-violet-500/20 to-indigo-400/20 border border-violet-500/30 text-foreground font-semibold text-lg">
-            {domain}
-          </span>
-        </div>
-      </div>
+    <div className="flex items-center gap-1">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`px-2.5 py-1 text-xs font-mono rounded transition-colors ${
+            selected === opt
+              ? "bg-accent text-white"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted"
+          }`}
+          title={descriptions?.[opt]}
+        >
+          {opt}
+        </button>
+      ))}
     </div>
   )
 }
@@ -120,24 +191,36 @@ export default function ProgressPlaygroundPage() {
   const [overallProgress, setOverallProgress] = useState(0)
   const [testDomain, setTestDomain] = useState("example-stays.com")
 
+  // Variant selections
+  const [progressVariant, setProgressVariant] = useState("A")
+  const [domainVariant, setDomainVariant] = useState("A")
+
   // Calculate current phase from overall progress
   const currentPhase = Math.min(Math.floor(overallProgress / 20), PHASES.length - 1)
 
   // Animate progress
   useEffect(() => {
     if (!isPlaying) return
-
     const interval = setInterval(() => {
-      setOverallProgress((prev) => {
-        if (prev >= 100) return 0
-        return prev + 0.5
-      })
+      setOverallProgress((prev) => prev >= 100 ? 0 : prev + 0.5)
     }, 50)
-
     return () => clearInterval(interval)
   }, [isPlaying])
 
   const reset = () => setOverallProgress(0)
+
+  const progressDescriptions: Record<string, string> = {
+    A: "Track with icons (current)",
+    B: "Minimal dots",
+  }
+
+  const domainDescriptions: Record<string, string> = {
+    A: "Gradient text",
+    B: "Underline accent",
+    C: "Subtle glow",
+    D: "Pill badge",
+    E: "Gradient pill",
+  }
 
   return (
     <main className="min-h-screen bg-background p-8">
@@ -188,17 +271,46 @@ export default function ProgressPlaygroundPage() {
         </div>
 
         {/* Progress Indicator */}
-        <section className="mb-12">
-          <h2 className="text-lg font-medium text-foreground mb-4">Progress Indicator</h2>
-          <div className="p-8 rounded-2xl border border-border bg-card flex items-center justify-center">
-            <DotsProgress currentPhase={currentPhase} />
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium text-foreground">Progress Indicator</h2>
+            <ToggleGroup
+              options={["A", "B"]}
+              selected={progressVariant}
+              onChange={setProgressVariant}
+              descriptions={progressDescriptions}
+            />
           </div>
+          <div className="p-8 rounded-2xl border border-border bg-card flex items-center justify-center min-h-[120px]">
+            {progressVariant === "A" && <ProgressTrack currentPhase={currentPhase} />}
+            {progressVariant === "B" && <ProgressDots currentPhase={currentPhase} />}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            {progressDescriptions[progressVariant]}
+          </p>
         </section>
 
-        {/* Domain Label Treatments */}
-        <section>
-          <h2 className="text-lg font-medium text-foreground mb-4">Domain Label Treatments</h2>
-          <DomainLabelTreatments domain={testDomain} />
+        {/* Domain Label */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium text-foreground">Domain Label</h2>
+            <ToggleGroup
+              options={["A", "B", "C", "D", "E"]}
+              selected={domainVariant}
+              onChange={setDomainVariant}
+              descriptions={domainDescriptions}
+            />
+          </div>
+          <div className="p-8 rounded-2xl border border-border bg-card flex items-center justify-center min-h-[80px]">
+            {domainVariant === "A" && <DomainLabelA domain={testDomain} />}
+            {domainVariant === "B" && <DomainLabelB domain={testDomain} />}
+            {domainVariant === "C" && <DomainLabelC domain={testDomain} />}
+            {domainVariant === "D" && <DomainLabelD domain={testDomain} />}
+            {domainVariant === "E" && <DomainLabelE domain={testDomain} />}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            {domainDescriptions[domainVariant]}
+          </p>
         </section>
       </div>
     </main>
