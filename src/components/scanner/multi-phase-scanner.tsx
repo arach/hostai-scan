@@ -81,12 +81,13 @@ export function MultiPhaseScanner({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Domain label - gradient text style */}
+      {/* Domain label - underline accent style */}
       {domain && (
         <div className="flex items-center justify-center gap-2 mb-6">
           <span className="text-xl text-muted-foreground">Scanning</span>
-          <span className="text-xl font-semibold bg-gradient-to-r from-violet-500 to-indigo-400 bg-clip-text text-transparent">
+          <span className="text-xl font-semibold text-foreground relative">
             {domain}
+            <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full" />
           </span>
         </div>
       )}
