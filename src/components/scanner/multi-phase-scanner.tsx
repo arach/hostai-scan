@@ -22,6 +22,8 @@ interface MultiPhaseScannerProps {
   overallProgress: number
   /** Custom phases (uses defaults if not provided) */
   phases?: AuditPhase[]
+  /** Domain being scanned */
+  domain?: string
 }
 
 // Default phases if none provided
@@ -29,7 +31,7 @@ const DEFAULT_PHASES: AuditPhase[] = [
   {
     id: "domain",
     name: "Domain Discovery",
-    description: "Analyzing domain & web presence",
+    description: "Resolving DNS, certificates & web presence",
     icon: <Globe className="h-5 w-5" />,
     color: "accent",
     items: ["whois-lookup.ts", "dns-records.json", "ssl-certificate.ts", "domain-history.tsx", "web-archive.ts", "social-profiles.json"],
@@ -37,7 +39,7 @@ const DEFAULT_PHASES: AuditPhase[] = [
   {
     id: "performance",
     name: "Performance Audit",
-    description: "Evaluating speed & DOM structure",
+    description: "Measuring speed & core web vitals",
     icon: <Zap className="h-5 w-5" />,
     color: "warning",
     items: ["lighthouse-core.ts", "pagespeed-api.json", "dom-analysis.tsx", "resource-timing.ts", "core-web-vitals.ts", "network-waterfall.json", "render-blocking.ts", "image-optimization.tsx"],
@@ -45,7 +47,7 @@ const DEFAULT_PHASES: AuditPhase[] = [
   {
     id: "seo",
     name: "SEO Analysis",
-    description: "Scanning search optimization metrics",
+    description: "Checking meta tags, schema & backlinks",
     icon: <Search className="h-5 w-5" />,
     color: "accent",
     items: ["meta-tags.ts", "schema-markup.json", "sitemap-parser.tsx", "robots-txt.ts", "backlink-analysis.ts", "keyword-density.json", "canonical-urls.ts", "heading-structure.tsx", "alt-text-audit.ts"],
@@ -53,7 +55,7 @@ const DEFAULT_PHASES: AuditPhase[] = [
   {
     id: "ui",
     name: "UI Evaluation",
-    description: "Assessing visual design & UX patterns",
+    description: "Inspecting responsive design & UX patterns",
     icon: <Eye className="h-5 w-5" />,
     color: "destructive",
     items: ["mobile-responsive.ts", "accessibility-a11y.json", "color-contrast.tsx", "touch-targets.ts", "visual-hierarchy.ts", "booking-flow.json", "trust-signals.tsx", "cta-placement.ts"],
@@ -61,7 +63,7 @@ const DEFAULT_PHASES: AuditPhase[] = [
   {
     id: "scoring",
     name: "Calculating Scores",
-    description: "Computing final audit results",
+    description: "Computing weighted audit results",
     icon: <Calculator className="h-5 w-5" />,
     color: "accent",
     items: ["performance-score.ts", "seo-score.ts", "mobile-score.ts", "accessibility-score.ts", "security-score.ts", "trust-signals-score.ts", "conversion-score.ts", "content-quality-score.ts", "technical-health-score.ts", "user-experience-score.ts", "benchmark-compare.ts", "overall-weighted-score.ts"],
@@ -73,11 +75,26 @@ export function MultiPhaseScanner({
   phaseProgress,
   overallProgress,
   phases = DEFAULT_PHASES,
+  domain,
 }: MultiPhaseScannerProps) {
   const phase = phases[currentPhase] || phases[0]
 
   return (
     <div className="w-full max-w-2xl mx-auto">
+      {/* Domain label - beautiful sticker style */}
+      {domain && (
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
+            <div className="relative">
+              <div className="w-2 h-2 rounded-full bg-accent" />
+              <div className="absolute inset-0 w-2 h-2 rounded-full bg-accent animate-ping" />
+            </div>
+            <span className="text-sm text-muted-foreground">Scanning</span>
+            <span className="text-base font-semibold text-foreground">{domain}</span>
+          </div>
+        </div>
+      )}
+
       {/* Progress Track */}
       <div className="mb-8 px-6">
         <div className="relative">
@@ -197,37 +214,47 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
         <span className="text-xs font-mono text-muted-foreground">domain-scanner</span>
       </div>
 
-      {/* Body - all items always rendered, visibility changes */}
-      <div className="flex-1 flex flex-col justify-center px-4 py-3">
-        <div className="space-y-0.5 font-mono">
+      {/* Body - all items visible from start, pending shown as placeholders */}
+      <div className="flex-1 px-4 py-4">
+        <div className="space-y-1 font-mono">
           {treeItems.map((item, i) => {
             const isComplete = isAllComplete || i < completedCount
             const isCurrent = !isAllComplete && i === currentIndex
-            const isVisible = isAllComplete || i <= currentIndex
+            const isPending = !isAllComplete && i > currentIndex
 
             return (
               <div
                 key={item.name}
-                className={`flex items-center gap-2 py-1 px-2 rounded transition-all duration-300 ${
+                className={`flex items-center gap-2 py-1.5 px-2 rounded transition-all duration-300 ${
                   isCurrent ? "bg-accent text-white" : ""
-                } ${!isVisible ? "opacity-0" : "opacity-100"}`}
+                }`}
                 style={{ marginLeft: item.indent * 16 }}
               >
-                <div className={`w-3 h-3 flex items-center justify-center text-[10px] ${
-                  isCurrent ? "text-white" : isComplete ? "text-accent" : "text-muted-foreground"
+                {/* Icon - always visible */}
+                <div className={`w-3 h-3 flex items-center justify-center text-[10px] transition-colors duration-300 ${
+                  isCurrent ? "text-white" : isComplete ? "text-accent" : "text-muted-foreground/30"
                 }`}>
                   {item.icon}
                 </div>
-                <span className={`text-[11px] ${
-                  isCurrent ? "text-white font-medium"
-                    : isComplete ? (item.type === "folder" ? "text-accent" : "text-foreground")
-                    : "text-muted-foreground"
-                }`}>
-                  {item.name}
-                </span>
+
+                {/* Name or placeholder */}
+                {isPending ? (
+                  <div className="h-3 rounded bg-muted/40" style={{ width: `${60 + (i % 3) * 20}px` }} />
+                ) : (
+                  <span className={`text-[11px] transition-colors duration-300 ${
+                    isCurrent ? "text-white font-medium"
+                      : isComplete ? (item.type === "folder" ? "text-accent" : "text-foreground")
+                      : "text-muted-foreground/40"
+                  }`}>
+                    {item.name}
+                  </span>
+                )}
+
+                {/* Status */}
                 <div className="ml-auto">
                   {isCurrent && <span className="text-[9px] text-white/80 animate-pulse">scanning...</span>}
                   {isComplete && <span className="text-[9px] text-accent">✓</span>}
+                  {isPending && <div className="h-2 w-6 rounded bg-muted/30" />}
                 </div>
               </div>
             )

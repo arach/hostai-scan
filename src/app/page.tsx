@@ -190,19 +190,11 @@ export default function Home() {
   if (status === "loading") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4 bg-background">
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl font-normal mb-2 text-foreground tracking-tight">
-            Analyzing {domain}
-          </h2>
-          <p className="text-muted-foreground">
-            {progress.currentStep || scannerProgress.progress.statusMessage}
-          </p>
-        </div>
-
         <MultiPhaseScanner
           currentPhase={scannerProgress.progress.currentPhase}
           phaseProgress={scannerProgress.progress.phaseProgress}
           overallProgress={scannerProgress.progress.overallProgress}
+          domain={domain}
         />
 
         <button
