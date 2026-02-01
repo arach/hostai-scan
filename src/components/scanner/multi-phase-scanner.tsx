@@ -215,7 +215,7 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
       </div>
 
       {/* Body - all items visible from start, pending shown as placeholders */}
-      <div className="flex-1 px-4 py-4">
+      <div className="flex-1 min-h-0 overflow-hidden px-4 py-4">
         <div className="space-y-1 font-mono">
           {treeItems.map((item, i) => {
             const isComplete = isAllComplete || i < completedCount
@@ -225,7 +225,7 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
             return (
               <div
                 key={item.name}
-                className={`flex items-center gap-2 py-1.5 px-2 rounded transition-all duration-300 ${
+                className={`flex items-center gap-2 h-7 px-2 rounded transition-all duration-300 ${
                   isCurrent ? "bg-accent text-white" : ""
                 }`}
                 style={{ marginLeft: item.indent * 16 }}
@@ -237,24 +237,26 @@ function DomainAnimation({ phase, progress }: { phase: AuditPhase; progress: num
                   {item.icon}
                 </div>
 
-                {/* Name or placeholder */}
-                {isPending ? (
-                  <div className="h-3 rounded bg-muted/40" style={{ width: `${60 + (i % 3) * 20}px` }} />
-                ) : (
-                  <span className={`text-[11px] transition-colors duration-300 ${
-                    isCurrent ? "text-white font-medium"
-                      : isComplete ? (item.type === "folder" ? "text-accent" : "text-foreground")
-                      : "text-muted-foreground/40"
-                  }`}>
-                    {item.name}
-                  </span>
-                )}
+                {/* Name or placeholder - fixed width container */}
+                <div className="flex-1 min-w-0">
+                  {isPending ? (
+                    <div className="h-3 rounded bg-muted/40" style={{ width: `${60 + (i % 3) * 20}px` }} />
+                  ) : (
+                    <span className={`text-[11px] transition-colors duration-300 ${
+                      isCurrent ? "text-white font-medium"
+                        : isComplete ? (item.type === "folder" ? "text-accent" : "text-foreground")
+                        : "text-muted-foreground/40"
+                    }`}>
+                      {item.name}
+                    </span>
+                  )}
+                </div>
 
-                {/* Status */}
-                <div className="ml-auto">
+                {/* Status - fixed width */}
+                <div className="w-16 text-right">
                   {isCurrent && <span className="text-[9px] text-white/80 animate-pulse">scanning...</span>}
                   {isComplete && <span className="text-[9px] text-accent">✓</span>}
-                  {isPending && <div className="h-2 w-6 rounded bg-muted/30" />}
+                  {isPending && <div className="h-2 w-6 rounded bg-muted/30 ml-auto" />}
                 </div>
               </div>
             )
