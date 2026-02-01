@@ -4,30 +4,42 @@ import { db } from "./db";
 let schemaInitialized = false;
 
 async function ensureSchema() {
-  if (schemaInitialized) return;
+  if (schemaInitialized) {
+    console.log("[Storage] Schema already initialized, skipping");
+    return;
+  }
 
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS audits (
-      id TEXT PRIMARY KEY,
-      domain TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'completed',
-      created_at TEXT NOT NULL,
-      completed_at TEXT,
-      result TEXT,
-      error TEXT
-    )
-  `);
+  console.log("[Storage] Initializing schema...");
 
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_audits_domain ON audits(domain)
-  `);
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS audits (
+        id TEXT PRIMARY KEY,
+        domain TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'completed',
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        result TEXT,
+        error TEXT
+      )
+    `);
+    console.log("[Storage] Table created");
 
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_audits_created ON audits(created_at DESC)
-  `);
+    await db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_audits_domain ON audits(domain)
+    `);
 
-  schemaInitialized = true;
-  console.log("Turso schema initialized");
+    await db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_audits_created ON audits(created_at DESC)
+    `);
+    console.log("[Storage] Indexes created");
+
+    schemaInitialized = true;
+    console.log("[Storage] Schema initialized successfully");
+  } catch (error) {
+    console.error("[Storage] Schema initialization failed:", error);
+    throw error;
+  }
 }
 
 export interface StoredAudit {
@@ -50,18 +62,28 @@ export async function saveAudit(
   domain: string,
   result: unknown
 ): Promise<string> {
-  await ensureSchema();
-  const id = generateAuditId(domain);
-  const now = new Date().toISOString();
+  console.log(`[Storage] saveAudit called for domain: ${domain}`);
 
-  await db.execute({
-    sql: `INSERT INTO audits (id, domain, status, created_at, completed_at, result)
-          VALUES (?, ?, 'completed', ?, ?, ?)`,
-    args: [id, domain, now, now, JSON.stringify(result)],
-  });
+  try {
+    await ensureSchema();
+    const id = generateAuditId(domain);
+    const now = new Date().toISOString();
+    const resultJson = JSON.stringify(result);
 
-  console.log(`Audit saved to Turso: ${id}`);
-  return id;
+    console.log(`[Storage] Inserting audit ${id}, result size: ${resultJson.length} bytes`);
+
+    await db.execute({
+      sql: `INSERT INTO audits (id, domain, status, created_at, completed_at, result)
+            VALUES (?, ?, 'completed', ?, ?, ?)`,
+      args: [id, domain, now, now, resultJson],
+    });
+
+    console.log(`[Storage] Audit saved successfully: ${id}`);
+    return id;
+  } catch (error) {
+    console.error(`[Storage] saveAudit failed:`, error);
+    throw error;
+  }
 }
 
 // Load an audit by ID
