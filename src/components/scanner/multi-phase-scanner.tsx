@@ -411,9 +411,9 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
         <span className="text-xs font-mono text-muted-foreground">seo-analyzer</span>
       </div>
 
-      {/* Body - metrics grid, all cells always visible */}
-      <div className="flex-1 flex items-center p-4">
-        <div className="grid grid-cols-3 gap-2.5 w-full">
+      {/* Body - metrics grid, symmetrical cards */}
+      <div className="flex-1 min-h-0 flex items-center p-4">
+        <div className="grid grid-cols-3 gap-2 w-full">
           {seoMetrics.map((metric, i) => {
             const isComplete = isAllComplete || i < completedCount
             const isScanning = !isAllComplete && i === currentIndex
@@ -432,33 +432,32 @@ function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number
             return (
               <div
                 key={metric.name}
-                className={`relative px-3 py-2.5 rounded-md border transition-all duration-200 ${
+                className={`flex items-center justify-between h-10 px-2.5 rounded border transition-all duration-200 ${
                   isScanning
-                    ? "bg-accent text-white border-accent ring-2 ring-accent/30"
+                    ? "bg-accent text-white border-accent"
                     : isComplete
                       ? `${resultBg} border-border/50`
                       : "bg-muted/10 border-border/20"
                 }`}
               >
-                {isComplete && (
-                  <div className={`absolute top-1.5 right-2 text-[9px] font-bold ${resultColor}`}>
-                    {resultIcon}
-                  </div>
-                )}
-                {isScanning && (
-                  <div className="absolute top-1.5 right-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  </div>
-                )}
-                <div className={`text-[11px] font-medium ${
+                {/* Name */}
+                <span className={`text-[11px] font-medium ${
                   isScanning ? "text-white" : isComplete ? resultColor : "text-muted-foreground/30"
                 }`}>
                   {metric.name}
-                </div>
-                <div className="mt-0.5 h-3">
-                  {isScanning && <span className="text-[8px] text-white/80">scanning...</span>}
-                  {isComplete && <span className={`text-[8px] ${resultColor} opacity-70`}>{metric.result}</span>}
-                  {isPending && <span className="text-[8px] text-muted-foreground/20">—</span>}
+                </span>
+
+                {/* Status icon - inline, not absolute */}
+                <div className="w-4 flex items-center justify-center">
+                  {isScanning && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  )}
+                  {isComplete && (
+                    <span className={`text-[10px] font-bold ${resultColor}`}>{resultIcon}</span>
+                  )}
+                  {isPending && (
+                    <span className="text-[10px] text-muted-foreground/20">·</span>
+                  )}
                 </div>
               </div>
             )
