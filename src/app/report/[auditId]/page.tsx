@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { loadAudit } from "@/lib/audit-storage";
-import { ReportDashboard } from "@/components/report-dashboard";
+import { PublicReportView } from "@/components/report";
 import type { AuditResult } from "@/types/audit";
 
 interface PageProps {
@@ -19,7 +19,7 @@ export default async function ReportPage({ params }: PageProps) {
 
   const result = audit.result as AuditResult;
 
-  return <ReportDashboard result={result} />;
+  return <PublicReportView result={result} />;
 }
 
 // Generate metadata for sharing

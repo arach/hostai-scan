@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ThemePicker } from "@/components/theme-picker";
 
 interface AuditSummary {
   id: string;
@@ -210,10 +211,13 @@ export default function AdminPage() {
             <h1 className="text-xl font-bold">Audit Admin</h1>
             <Badge variant="outline">{audits.length} audits</Badge>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchAudits}>
-            <RefreshCw className="size-4" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchAudits}>
+              <RefreshCw className="size-4" />
+              Refresh
+            </Button>
+            <ThemePicker />
+          </div>
         </div>
       </header>
 

@@ -63,3 +63,5 @@ next-env.d.ts
 # Local SQLite database
 local.db
 local.db-*
+.vercel
+.env*.local

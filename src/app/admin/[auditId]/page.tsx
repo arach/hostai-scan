@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Highlight, themes } from "prism-react-renderer";
 import {
@@ -25,7 +25,75 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ThemePicker } from "@/components/theme-picker";
 import type { AuditResult } from "@/types/audit";
+
+// ============================================================================
+// Navigation Sections Config
+// ============================================================================
+
+const NAV_SECTIONS = [
+  { id: "overview", label: "Overview", subsections: ["Score Ring", "Category Breakdown", "Data Sources Status"] },
+  { id: "recommendations-preview", label: "Top Issues", subsections: ["Priority Issues", "Quick Stats"] },
+  { id: "booking-trust-section", label: "Booking & Trust", subsections: ["Booking Flow", "Trust Signals"] },
+  { id: "seo-section", label: "SEO Metrics", subsections: ["DataForSEO", "SEMrush Comparison"] },
+  { id: "semrush-section", label: "SEMrush Data", subsections: ["Domain Rank", "Backlinks", "Top Keywords", "Referring Domains"] },
+  { id: "revenue-section", label: "Revenue Impact", subsections: ["Score Gap", "Monthly Loss"] },
+  { id: "data-sources-section", label: "Data Sources", subsections: ["Core Web Vitals", "Lighthouse", "SEO", "Booking Flow", "Trust Signals"] },
+  { id: "recommendations-section", label: "All Recommendations", subsections: ["By Category", "Pass/Fail/Warning"] },
+  { id: "raw-api-section", label: "Raw API Data", subsections: ["HTML", "PageSpeed", "DataForSEO", "SEMrush"] },
+  { id: "full-result-section", label: "Full Result", subsections: ["Complete JSON"] },
+];
+
+// ============================================================================
+// useActiveSection Hook - Tracks which section is currently in view
+// ============================================================================
+
+function useActiveSection(sectionIds: string[]) {
+  const [activeSection, setActiveSection] = useState<string>(sectionIds[0] || "");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    // Disconnect previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    const callback: IntersectionObserverCallback = (entries) => {
+      // Find the first section that is intersecting from the top
+      const visibleSections = entries
+        .filter((entry) => entry.isIntersecting)
+        .map((entry) => ({
+          id: entry.target.id,
+          top: entry.boundingClientRect.top,
+        }))
+        .sort((a, b) => a.top - b.top);
+
+      if (visibleSections.length > 0) {
+        setActiveSection(visibleSections[0].id);
+      }
+    };
+
+    observerRef.current = new IntersectionObserver(callback, {
+      rootMargin: "-20% 0px -60% 0px", // Trigger when section is in upper portion of viewport
+      threshold: 0,
+    });
+
+    // Observe all sections
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        observerRef.current?.observe(element);
+      }
+    });
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [sectionIds]);
+
+  return activeSection;
+}
 
 // ============================================================================
 // Copy Button - Reusable copy to clipboard
@@ -211,7 +279,7 @@ interface RawApiData {
 function ScoreRing({
   score,
   projectedScore,
-  size = 180,
+  size = 160,
 }: {
   score: number;
   projectedScore?: number;
@@ -219,7 +287,8 @@ function ScoreRing({
 }) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
+  const padding = 8; // Extra padding for glow effect
+  const radius = (size - strokeWidth - padding) / 2;
   const circumference = 2 * Math.PI * radius;
 
   // Animate score on mount
@@ -242,13 +311,16 @@ function ScoreRing({
 
   const colors = getScoreColor(score);
 
+  const svgSize = size + padding * 2;
+  const center = svgSize / 2;
+
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative" style={{ width: svgSize, height: svgSize }}>
       <svg
         className="transform -rotate-90"
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
+        width={svgSize}
+        height={svgSize}
+        viewBox={`0 0 ${svgSize} ${svgSize}`}
       >
         <defs>
           <linearGradient id="scoreGradientGreen" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -274,8 +346,8 @@ function ScoreRing({
 
         {/* Background track */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={center}
+          cy={center}
           r={radius}
           fill="transparent"
           stroke="hsl(var(--muted))"
@@ -286,8 +358,8 @@ function ScoreRing({
         {/* Projected score ghost arc */}
         {projectedScore && projectedScore > score && (
           <circle
-            cx={size / 2}
-            cy={size / 2}
+            cx={center}
+            cy={center}
             r={radius}
             fill="transparent"
             stroke="hsl(var(--muted-foreground))"
@@ -301,8 +373,8 @@ function ScoreRing({
 
         {/* Main score arc */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={center}
+          cy={center}
           r={radius}
           fill="transparent"
           stroke={colors.stroke}
@@ -348,12 +420,8 @@ function ScoreRing({
 
 function StatusBar({
   dataSources,
-  fetchTimeMs,
-  url,
 }: {
   dataSources: Record<string, boolean>;
-  fetchTimeMs?: number;
-  url?: string;
 }) {
   const activeCount = Object.values(dataSources).filter(Boolean).length;
   const totalCount = Object.keys(dataSources).length;
@@ -361,60 +429,44 @@ function StatusBar({
   const sourceLabels: Record<string, string> = {
     htmlAnalysis: "HTML",
     pageSpeed: "PageSpeed",
+    coreWebVitals: "CWV",
     seoData: "SEO",
     bookingFlowAnalysis: "Booking",
     trustSignalAnalysis: "Trust",
   };
 
   return (
-    <div className="flex items-center gap-6 px-4 py-3 bg-muted/30 rounded-lg border border-border/50 overflow-x-auto">
+    <div className="flex items-center gap-4 px-3 py-2 bg-muted/30 rounded-lg border border-border/50">
       {/* Data Sources */}
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-          Sources
-        </span>
-        <div className="flex items-center gap-2">
-          {Object.entries(dataSources).map(([key, active]) => (
+      <div className="flex items-center gap-2 flex-wrap">
+        {Object.entries(dataSources).map(([key, active]) => (
+          <div
+            key={key}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
+              active ? "bg-success/10 text-success" : "bg-muted/50 text-muted-foreground/50"
+            }`}
+            title={sourceLabels[key] || key}
+          >
             <div
-              key={key}
-              className="flex items-center gap-1.5"
-              title={sourceLabels[key] || key}
-            >
-              <div
-                className={`size-2 rounded-full ${
-                  active ? "bg-success animate-pulse" : "bg-muted-foreground/30"
-                }`}
-              />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {sourceLabels[key] || key}
-              </span>
-            </div>
-          ))}
-        </div>
+              className={`size-1.5 rounded-full ${
+                active ? "bg-success" : "bg-muted-foreground/30"
+              }`}
+            />
+            <span className="whitespace-nowrap">
+              {sourceLabels[key] || key}
+            </span>
+          </div>
+        ))}
       </div>
 
       <div className="h-4 w-px bg-border/50" />
 
-      {/* Stats */}
-      <div className="flex items-center gap-4 text-xs">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Database className="size-3" />
-          <span className="font-mono">
-            {activeCount}/{totalCount}
-          </span>
-        </div>
-        {fetchTimeMs && (
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock className="size-3" />
-            <span className="font-mono">{fetchTimeMs}ms</span>
-          </div>
-        )}
-        {url && (
-          <div className="flex items-center gap-1.5 text-muted-foreground max-w-[300px]">
-            <Globe className="size-3 shrink-0" />
-            <span className="font-mono truncate">{url}</span>
-          </div>
-        )}
+      {/* Count */}
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Database className="size-3" />
+        <span className="font-mono">
+          {activeCount}/{totalCount}
+        </span>
       </div>
     </div>
   );
@@ -436,18 +488,26 @@ function CategoryBar({
   source?: string;
 }) {
   const contribution = (score * weight) / 100;
+  const isHighWeight = weight >= 15; // Conversion, Performance, Trust, Content
+
   const getBarColor = (s: number) => {
     if (s >= 70) return "bg-success";
     if (s >= 50) return "bg-warning";
     return "bg-error";
   };
 
+  // Visual emphasis based on weight - low weight categories are more muted
+  const textOpacity = isHighWeight ? "text-foreground" : "text-muted-foreground";
+  const barOpacity = isHighWeight ? 1 : 0.5;
+
   return (
     <div className="group">
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{name}</span>
-          <span className="text-xs text-muted-foreground">({weight}%)</span>
+          <span className={`text-sm font-medium ${textOpacity}`}>{name}</span>
+          <span className={`text-xs ${isHighWeight ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+            {weight}%
+          </span>
         </div>
         <div className="flex items-center gap-3">
           {source && (
@@ -455,18 +515,18 @@ function CategoryBar({
               {source}
             </span>
           )}
-          <span className="font-mono text-sm tabular-nums">
+          <span className={`font-mono text-sm tabular-nums ${textOpacity}`}>
             {score}
-            <span className="text-muted-foreground text-xs ml-1">
+            <span className={`text-xs ml-1 ${isHighWeight ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
               → {contribution.toFixed(1)}pts
             </span>
           </span>
         </div>
       </div>
-      <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+      <div className={`h-2 bg-muted/50 rounded-full overflow-hidden ${!isHighWeight ? "h-1.5" : ""}`}>
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${getBarColor(score)}`}
-          style={{ width: `${score}%`, opacity: 0.3 + (weight / 100) * 0.7 }}
+          style={{ width: `${score}%`, opacity: barOpacity }}
         />
       </div>
     </div>
@@ -1486,7 +1546,107 @@ function SEMrushDashboard({ rawApiData }: { rawApiData: RawApiData }) {
 }
 
 // ============================================================================
-// Recommendations Section
+// Recommendations Preview - Top Issues Summary
+// ============================================================================
+
+function RecommendationsPreview({
+  recommendations,
+  onViewAll,
+}: {
+  recommendations: AuditResult["recommendations"];
+  onViewAll: () => void;
+}) {
+  // Get top 5 actionable items (fails first, then warnings, sorted by impact)
+  const prioritized = [...recommendations]
+    .filter((r) => r.status !== "pass")
+    .sort((a, b) => {
+      // Sort by status (fail > warning) then by impact (High > Medium > Low)
+      const statusOrder = { fail: 0, warning: 1, pass: 2 };
+      const impactOrder = { High: 0, Medium: 1, Low: 2 };
+      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      return impactOrder[a.impact] - impactOrder[b.impact];
+    })
+    .slice(0, 5);
+
+  const stats = {
+    pass: recommendations.filter((r) => r.status === "pass").length,
+    fail: recommendations.filter((r) => r.status === "fail").length,
+    warning: recommendations.filter((r) => r.status === "warning").length,
+  };
+
+  if (prioritized.length === 0) {
+    return (
+      <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="size-5 text-success" />
+          <span className="font-medium">All checks passed!</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-card/30 rounded-lg border border-border/50 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <AlertTriangle className="size-4" />
+          Top Issues to Address
+        </h2>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1 text-error">
+              <XCircle className="size-3" /> {stats.fail}
+            </span>
+            <span className="flex items-center gap-1 text-warning">
+              <AlertTriangle className="size-3" /> {stats.warning}
+            </span>
+            <span className="flex items-center gap-1 text-success">
+              <CheckCircle2 className="size-3" /> {stats.pass}
+            </span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onViewAll} className="text-xs">
+            View all →
+          </Button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {prioritized.map((rec, idx) => (
+          <div
+            key={idx}
+            className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border/30"
+          >
+            {rec.status === "fail" ? (
+              <XCircle className="size-4 text-error shrink-0 mt-0.5" />
+            ) : (
+              <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium">{rec.title}</span>
+                <Badge
+                  variant={
+                    rec.impact === "High" ? "error" : rec.impact === "Medium" ? "warning" : "secondary"
+                  }
+                  className="text-[10px] px-1.5 py-0"
+                >
+                  {rec.impact}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  {rec.category}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{rec.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Recommendations Section - Full List
 // ============================================================================
 
 function RecommendationsGrid({
@@ -1646,6 +1806,11 @@ export default function AdminAuditDetailPage() {
     return `${diffDays}d ago`;
   };
 
+  // Track active section for navigation highlighting - must be before early returns
+  const sectionIds = NAV_SECTIONS.map((s) => s.id);
+  const activeSection = useActiveSection(sectionIds);
+  const activeSectionData = NAV_SECTIONS.find((s) => s.id === activeSection);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1725,53 +1890,107 @@ export default function AdminAuditDetailPage() {
                 <ExternalLink className="size-4" />
                 View Report
               </Button>
+
+              {/* Theme Picker */}
+              <ThemePicker />
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* ================================================================== */}
-        {/* Score + Status Section */}
-        {/* ================================================================== */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* Score Ring */}
-          <div className="flex justify-center lg:justify-start">
-            <ScoreRing score={result.overallScore} projectedScore={result.projectedScore} />
-          </div>
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-6">
+          {/* ================================================================== */}
+          {/* Left Sidebar - Section Navigation */}
+          {/* ================================================================== */}
+          <aside className="hidden lg:block w-44 shrink-0">
+            <nav className="sticky top-24 space-y-0.5">
+              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 px-3">
+                Sections
+              </div>
+              {NAV_SECTIONS.map((item) => {
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" })}
+                    className={`
+                      block w-full text-left px-3 py-1.5 text-xs rounded-md transition-all
+                      ${isActive
+                        ? "bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }
+                    `}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
 
-          {/* Right side content */}
-          <div className="flex-1 space-y-6">
-            {/* Status Bar */}
-            <StatusBar
-              dataSources={dataSources}
-              fetchTimeMs={meta?.fetchTimeMs}
-              url={meta?.url}
-            />
+          {/* ================================================================== */}
+          {/* Main Content */}
+          {/* ================================================================== */}
+          <main className="flex-1 min-w-0 space-y-8">
+            {/* ================================================================== */}
+            {/* Score + Status Section */}
+            {/* ================================================================== */}
+            <div id="overview" className="flex flex-col lg:flex-row gap-8 items-start">
+              {/* Score Ring with Metadata */}
+              <div className="flex flex-col items-center lg:items-start gap-4">
+                <ScoreRing score={result.overallScore} projectedScore={result.projectedScore} />
 
-            {/* Category Breakdown */}
-            <div className="space-y-3">
-              {result.categories.map((cat) => (
-                <CategoryBar
-                  key={cat.name}
-                  name={cat.name}
-                  score={cat.score}
-                  weight={cat.weight}
-                  source={cat.source}
-                />
-              ))}
-              <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                <span className="text-sm font-medium">Weighted Total</span>
-                <span className="font-mono text-lg tabular-nums">
-                  {result.categories
-                    .reduce((sum, cat) => sum + (cat.score * cat.weight) / 100, 0)
-                    .toFixed(0)}
-                  <span className="text-muted-foreground text-sm">/100</span>
-                </span>
+                {/* Audit Metadata */}
+                <div className="text-center lg:text-left space-y-1 max-w-[180px]">
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{audit.domain}</span>
+                  </div>
+                  {meta?.url && (
+                    <div className="text-[10px] text-muted-foreground truncate" title={meta.url}>
+                      {meta.url}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-center lg:justify-start gap-3 text-[10px] text-muted-foreground">
+                    {meta?.fetchTimeMs && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="size-3" />
+                        {(meta.fetchTimeMs / 1000).toFixed(1)}s
+                      </span>
+                    )}
+                    <span>{formatRelativeTime(audit.completedAt)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right side content */}
+              <div className="flex-1 space-y-6">
+                {/* Status Bar */}
+                <StatusBar dataSources={dataSources} />
+
+                {/* Category Breakdown */}
+                <div className="space-y-3">
+                  {result.categories.map((cat) => (
+                    <CategoryBar
+                      key={cat.name}
+                      name={cat.name}
+                      score={cat.score}
+                      weight={cat.weight}
+                      source={cat.source}
+                    />
+                  ))}
+                  <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <span className="text-sm font-medium">Weighted Total</span>
+                    <span className="font-mono text-lg tabular-nums">
+                      {result.categories
+                        .reduce((sum, cat) => sum + (cat.score * cat.weight) / 100, 0)
+                        .toFixed(0)}
+                      <span className="text-muted-foreground text-sm">/100</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
         {/* ================================================================== */}
         {/* Recalculate Result */}
@@ -1819,14 +2038,14 @@ export default function AdminAuditDetailPage() {
         )}
 
         {/* ================================================================== */}
-        {/* Notes/Warnings */}
+        {/* Notes/Warnings - Only show actual warnings, not informational notes */}
         {/* ================================================================== */}
-        {meta?.notes && meta.notes.length > 0 && (
+        {meta?.notes && meta.notes.filter(n => n.includes("unavailable") || n.includes("error") || n.includes("missing")).length > 0 && (
           <div className="border border-warning/30 bg-warning/5 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
               <div className="space-y-1">
-                {meta.notes.map((note, idx) => (
+                {meta.notes.filter(n => n.includes("unavailable") || n.includes("error") || n.includes("missing")).map((note, idx) => (
                   <p key={idx} className="text-sm text-muted-foreground">
                     {note}
                   </p>
@@ -1837,19 +2056,19 @@ export default function AdminAuditDetailPage() {
         )}
 
         {/* ================================================================== */}
-        {/* SEO Metrics Comparison - DataForSEO vs SEMrush */}
+        {/* Recommendations Preview - Top issues at a glance */}
         {/* ================================================================== */}
-        <SEOMetricsComparison result={result} />
+        <div id="recommendations-preview">
+        <RecommendationsPreview
+          recommendations={result.recommendations}
+          onViewAll={() => document.getElementById("recommendations-section")?.scrollIntoView({ behavior: "smooth" })}
+        />
+        </div>
 
         {/* ================================================================== */}
-        {/* SEMrush Full Dashboard */}
+        {/* Booking Flow & Trust Signals - Moved Up */}
         {/* ================================================================== */}
-        <SEMrushDashboard rawApiData={rawApiData} />
-
-        {/* ================================================================== */}
-        {/* Booking Flow & Trust Signals - Metric Grids */}
-        {/* ================================================================== */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div id="booking-trust-section" className="grid md:grid-cols-2 gap-6">
           {/* Booking Flow */}
           {result.bookingFlow && (
             <MetricGrid
@@ -1892,9 +2111,23 @@ export default function AdminAuditDetailPage() {
         </div>
 
         {/* ================================================================== */}
+        {/* SEO Metrics Comparison - DataForSEO vs SEMrush */}
+        {/* ================================================================== */}
+        <div id="seo-section">
+          <SEOMetricsComparison result={result} />
+        </div>
+
+        {/* ================================================================== */}
+        {/* SEMrush Full Dashboard */}
+        {/* ================================================================== */}
+        <div id="semrush-section">
+          <SEMrushDashboard rawApiData={rawApiData} />
+        </div>
+
+        {/* ================================================================== */}
         {/* Revenue Impact */}
         {/* ================================================================== */}
-        <div className="bg-card/30 rounded-lg border border-border/50 p-6">
+        <div id="revenue-section" className="bg-card/30 rounded-lg border border-border/50 p-6">
           <h3 className="text-sm font-medium mb-4 text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             <Activity className="size-4" />
             Revenue Impact Analysis
@@ -1924,7 +2157,7 @@ export default function AdminAuditDetailPage() {
         {/* ================================================================== */}
         {/* Data Panels */}
         {/* ================================================================== */}
-        <div>
+        <div id="data-sources-section">
           <h2 className="text-sm font-medium mb-4 text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             <Database className="size-4" />
             Data Sources
@@ -1969,12 +2202,12 @@ export default function AdminAuditDetailPage() {
         </div>
 
         {/* ================================================================== */}
-        {/* Recommendations */}
+        {/* Recommendations - Full List */}
         {/* ================================================================== */}
-        <div>
+        <div id="recommendations-section">
           <h2 className="text-sm font-medium mb-4 text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             <AlertTriangle className="size-4" />
-            Recommendations
+            All Recommendations
           </h2>
           <RecommendationsGrid recommendations={result.recommendations} />
         </div>
@@ -1983,7 +2216,7 @@ export default function AdminAuditDetailPage() {
         {/* Raw API Responses - Tabbed Interface */}
         {/* ================================================================== */}
         {Object.keys(rawApiData).length > 0 && (
-          <div>
+          <div id="raw-api-section">
             <h2 className="text-sm font-medium mb-4 text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Server className="size-4" />
               Raw API Responses
@@ -1995,7 +2228,7 @@ export default function AdminAuditDetailPage() {
         {/* ================================================================== */}
         {/* Full Raw Result */}
         {/* ================================================================== */}
-        <div>
+        <div id="full-result-section">
           <h2 className="text-sm font-medium mb-4 text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             <FileCode className="size-4" />
             Full Audit Result
@@ -2007,6 +2240,129 @@ export default function AdminAuditDetailPage() {
             icon={<Database className="size-4" />}
             accentColor="border-l-muted-foreground"
           />
+        </div>
+          </main>
+
+          {/* ================================================================== */}
+          {/* Right Sidebar - Current Section Details */}
+          {/* ================================================================== */}
+          <aside className="hidden xl:block w-52 shrink-0">
+            <div className="sticky top-24 space-y-4">
+              {/* Current Section Indicator */}
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                  Current Section
+                </div>
+                <div className="text-sm font-medium text-foreground">
+                  {activeSectionData?.label || "Overview"}
+                </div>
+              </div>
+
+              {/* Section Components */}
+              {activeSectionData?.subsections && activeSectionData.subsections.length > 0 && (
+                <div className="p-3 rounded-lg bg-card/50 border border-border/50">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Components
+                  </div>
+                  <ul className="space-y-1">
+                    {activeSectionData.subsections.map((sub, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="size-1 rounded-full bg-muted-foreground/50" />
+                        {sub}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Quick Stats for Overview */}
+              {activeSection === "overview" && (
+                <div className="p-3 rounded-lg bg-card/50 border border-border/50">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Quick Stats
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Score</span>
+                      <span className="font-mono font-medium">{result.overallScore}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Categories</span>
+                      <span className="font-mono">{result.categories.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Issues</span>
+                      <span className="font-mono text-error">
+                        {result.recommendations.filter((r) => r.status === "fail").length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations Stats */}
+              {(activeSection === "recommendations-preview" || activeSection === "recommendations-section") && (
+                <div className="p-3 rounded-lg bg-card/50 border border-border/50">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Summary
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-error">Failed</span>
+                      <span className="font-mono">{result.recommendations.filter((r) => r.status === "fail").length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-warning">Warnings</span>
+                      <span className="font-mono">{result.recommendations.filter((r) => r.status === "warning").length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-success">Passed</span>
+                      <span className="font-mono">{result.recommendations.filter((r) => r.status === "pass").length}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Data Sources Stats */}
+              {activeSection === "data-sources-section" && (
+                <div className="p-3 rounded-lg bg-card/50 border border-border/50">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Status
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    {Object.entries(dataSources).map(([key, active]) => (
+                      <div key={key} className="flex items-center gap-2">
+                        <div className={`size-1.5 rounded-full ${active ? "bg-success" : "bg-muted-foreground/30"}`} />
+                        <span className={active ? "text-foreground" : "text-muted-foreground"}>
+                          {key.replace(/([A-Z])/g, " $1").trim()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Audit Metadata */}
+              <div className="p-3 rounded-lg bg-muted/20 border border-border/30">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                  Audit Info
+                </div>
+                <div className="space-y-1.5 text-[10px] text-muted-foreground">
+                  <div className="truncate" title={audit.id}>
+                    ID: <span className="font-mono">{audit.id.slice(0, 12)}...</span>
+                  </div>
+                  <div>
+                    Generated: {formatRelativeTime(audit.completedAt)}
+                  </div>
+                  {meta?.fetchTimeMs && (
+                    <div>
+                      Duration: {(meta.fetchTimeMs / 1000).toFixed(1)}s
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
