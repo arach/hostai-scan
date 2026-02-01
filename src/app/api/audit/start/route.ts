@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       .split("/")[0];
 
     // Create job
-    const job = createJob(cleanDomain);
+    const job = await createJob(cleanDomain);
 
     // Start audit in background (don't await)
     runAuditInBackground(job.id, cleanDomain);
@@ -45,15 +45,15 @@ async function runAuditInBackground(jobId: string, domain: string) {
 
   try {
     // Update to running
-    updateJob(jobId, {
+    await updateJob(jobId, {
       status: "running",
       progress: 10,
       currentStep: "Fetching website...",
     });
 
     // Run the actual audit
-    const result = await runAudit(url, domain, (progress, step) => {
-      updateJob(jobId, { progress, currentStep: step });
+    const result = await runAudit(url, domain, async (progress, step) => {
+      await updateJob(jobId, { progress, currentStep: step });
     });
 
     // Save to JSON file for persistence
@@ -61,7 +61,7 @@ async function runAuditInBackground(jobId: string, domain: string) {
     console.log(`Audit saved with ID: ${auditId}`);
 
     // Mark as completed with the persisted audit ID
-    updateJob(jobId, {
+    await updateJob(jobId, {
       status: "completed",
       progress: 100,
       currentStep: "Complete",
@@ -70,7 +70,7 @@ async function runAuditInBackground(jobId: string, domain: string) {
     });
   } catch (error) {
     console.error("Audit failed:", error);
-    updateJob(jobId, {
+    await updateJob(jobId, {
       status: "failed",
       error: String(error),
       currentStep: "Failed",

@@ -100,7 +100,7 @@ interface SEOMetricsData {
   source?: "dataforseo" | "semrush" | "none";
 }
 
-type ProgressCallback = (progress: number, step: string) => void;
+type ProgressCallback = (progress: number, step: string) => void | Promise<void>;
 
 // Request info for curl command generation
 interface RequestInfo {
