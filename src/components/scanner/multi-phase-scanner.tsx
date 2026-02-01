@@ -419,88 +419,107 @@ function PerformanceAnimation({ phase, progress }: { phase: AuditPhase; progress
 // ============================================================================
 
 function SEOAnimation({ phase, progress }: { phase: AuditPhase; progress: number }) {
-  const [activeItems, setActiveItems] = useState<number[]>([])
-  const [currentScan, setCurrentScan] = useState(0)
-
-  useEffect(() => {
-    const count = Math.floor((progress / 100) * phase.items.length)
-    setActiveItems(Array.from({ length: count }, (_, i) => i))
-  }, [progress, phase.items.length])
-
-  useEffect(() => {
-    if (activeItems.length === 0) return
-    const interval = setInterval(() => {
-      setCurrentScan((prev) => (prev + 1) % phase.items.length)
-    }, 400)
-    return () => clearInterval(interval)
-  }, [activeItems.length, phase.items.length])
-
+  // SEO metrics with simulated results (pass/warning/issue)
   const seoMetrics = useMemo(() => [
-    { name: "Meta Tags", category: "On-Page" },
-    { name: "Schema Markup", category: "On-Page" },
-    { name: "Sitemap", category: "Technical" },
-    { name: "Robots.txt", category: "Technical" },
-    { name: "Backlinks", category: "Off-Page" },
-    { name: "Keywords", category: "Content" },
-    { name: "Canonicals", category: "Technical" },
-    { name: "Headings", category: "Content" },
-    { name: "Alt Text", category: "Content" },
-  ], [])
+    { name: "Meta Tags", result: "pass" },
+    { name: "Schema", result: "warning" },
+    { name: "Sitemap", result: "pass" },
+    { name: "Robots.txt", result: "pass" },
+    { name: "Backlinks", result: "pass" },
+    { name: "Keywords", result: "warning" },
+    { name: "Canonicals", result: "pass" },
+    { name: "Headings", result: "issue" },
+    { name: "Alt Text", result: "warning" },
+  ] as const, [])
 
-  const categories = ["On-Page", "Technical", "Content", "Off-Page"]
+  // Calculate which item is currently being scanned based on progress
+  const completedCount = Math.floor((progress / 100) * seoMetrics.length)
+  const currentIndex = Math.min(completedCount, seoMetrics.length - 1)
 
   return (
     <div className="relative h-64 rounded-lg bg-muted/50 overflow-hidden border border-border p-4">
+      {/* Header */}
       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
         <Search className="h-4 w-4 text-accent" />
         <span className="text-xs font-mono text-muted-foreground">seo-analyzer</span>
-        <span className="text-xs text-muted-foreground ml-auto">{activeItems.length}/{phase.items.length} checks</span>
+        <span className="text-xs text-muted-foreground ml-auto font-mono tabular-nums">
+          {completedCount}/{seoMetrics.length} checks
+        </span>
       </div>
 
+      {/* Grid of metrics */}
       <div className="grid grid-cols-3 gap-2">
         {seoMetrics.map((metric, i) => {
-          const isActive = activeItems.includes(i)
-          const isScanning = currentScan === i && !isActive
-          const category = categories.indexOf(metric.category)
+          const isComplete = i < completedCount
+          const isScanning = i === currentIndex && completedCount < seoMetrics.length
+          const isPending = i > currentIndex
+
+          // Result colors
+          const resultColor = metric.result === "pass" ? "text-accent"
+            : metric.result === "warning" ? "text-warning"
+            : "text-destructive"
+          const resultBg = metric.result === "pass" ? "bg-accent/10"
+            : metric.result === "warning" ? "bg-warning/10"
+            : "bg-destructive/10"
+          const resultIcon = metric.result === "pass" ? "✓"
+            : metric.result === "warning" ? "!"
+            : "×"
 
           return (
             <div
               key={metric.name}
-              className={`relative px-2 py-2 rounded-md border transition-all duration-300 ${
+              className={`relative px-2.5 py-2 rounded-md border transition-all duration-200 ${
                 isScanning
-                  ? "bg-accent text-white border-accent shadow-sm"
-                  : isActive
-                    ? "bg-accent/15 border-accent/40 text-accent"
-                    : "bg-muted/20 border-border/30 text-muted-foreground/60"
+                  ? "bg-accent text-white border-accent ring-2 ring-accent/30"
+                  : isComplete
+                    ? `${resultBg} border-border/50`
+                    : "bg-muted/20 border-border/30"
               }`}
-              style={{ transitionDelay: `${i * 30}ms` }}
             >
-              <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full transition-colors ${
-                isScanning
-                  ? "bg-white"
-                  : isActive
-                    ? category === 0 ? "bg-accent" : category === 1 ? "bg-warning" : category === 2 ? "bg-chart-2" : "bg-chart-3"
-                    : "bg-muted"
-              }`} />
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] font-medium truncate ${isScanning ? "text-white" : ""}`}>{metric.name}</span>
+              {/* Result indicator (top-right) */}
+              {isComplete && (
+                <div className={`absolute top-1 right-1.5 text-[9px] font-bold ${resultColor}`}>
+                  {resultIcon}
+                </div>
+              )}
+              {isScanning && (
+                <div className="absolute top-1 right-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                </div>
+              )}
+
+              {/* Metric name */}
+              <div className={`text-[10px] font-medium ${
+                isScanning ? "text-white" : isComplete ? resultColor : "text-muted-foreground/50"
+              }`}>
+                {metric.name}
               </div>
-              <div className="mt-1 flex items-center gap-1">
-                {isScanning && <span className="text-[8px] text-white/80 animate-pulse">scanning...</span>}
-                {isActive && !isScanning && <span className="text-[8px] text-accent">complete</span>}
-                {!isActive && !isScanning && <span className="text-[8px] text-muted-foreground/40">pending</span>}
+
+              {/* Status text */}
+              <div className="mt-0.5">
+                {isScanning && (
+                  <span className="text-[8px] text-white/80">scanning...</span>
+                )}
+                {isComplete && (
+                  <span className={`text-[8px] ${resultColor} opacity-70`}>
+                    {metric.result}
+                  </span>
+                )}
+                {isPending && (
+                  <span className="text-[8px] text-muted-foreground/30">pending</span>
+                )}
               </div>
             </div>
           )
         })}
       </div>
 
+      {/* Legend */}
       <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
         <div className="flex gap-3 text-[9px] text-muted-foreground">
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-accent" /> On-Page</span>
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-warning" /> Technical</span>
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-chart-2" /> Content</span>
-          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-chart-3" /> Off-Page</span>
+          <span className="flex items-center gap-1"><span className="text-accent font-bold">✓</span> Pass</span>
+          <span className="flex items-center gap-1"><span className="text-warning font-bold">!</span> Warning</span>
+          <span className="flex items-center gap-1"><span className="text-destructive font-bold">×</span> Issue</span>
         </div>
       </div>
     </div>
@@ -625,7 +644,7 @@ function UIAnimation({ phase, progress }: { phase: AuditPhase; progress: number 
           <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-warning" /> Warning</span>
           <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-destructive" /> Issue</span>
         </div>
-        <span className="text-[9px] font-mono text-muted-foreground">{highlights.length}/6 checks</span>
+        <span className="text-[9px] font-mono text-muted-foreground tabular-nums">{Math.floor(progress / 100 * 8)}/8 checks</span>
       </div>
     </div>
   )
@@ -649,31 +668,26 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
     { id: "ux", label: "User Experience", target: 69, weight: 5 },
   ], [])
 
-  const [scores, setScores] = useState<Record<string, number>>(() =>
-    Object.fromEntries(scoreRubrics.map(r => [r.id, 0]))
-  )
-  const [activeIndex, setActiveIndex] = useState(0)
+  // Smooth progress - how many rubrics are complete vs in progress
+  const completedCount = Math.floor((progress / 100) * scoreRubrics.length)
+  const isAllComplete = progress >= 95 // Consider complete at 95%+
 
-  useEffect(() => {
-    const newScores: Record<string, number> = {}
+  // Calculate scores with smooth fill
+  const scores = useMemo(() => {
+    const result: Record<string, number> = {}
     scoreRubrics.forEach((rubric, i) => {
-      const rubricStart = (i / scoreRubrics.length) * 70
-      const rubricEnd = rubricStart + 25
-      if (progress >= rubricEnd) newScores[rubric.id] = rubric.target
-      else if (progress > rubricStart) {
-        const rubricProgress = (progress - rubricStart) / (rubricEnd - rubricStart)
-        newScores[rubric.id] = Math.floor(rubric.target * rubricProgress)
-      } else newScores[rubric.id] = 0
+      if (isAllComplete || i < completedCount) {
+        result[rubric.id] = rubric.target
+      } else if (i === completedCount) {
+        // Currently filling this one
+        const itemProgress = (progress / 100 * scoreRubrics.length) - completedCount
+        result[rubric.id] = Math.floor(rubric.target * itemProgress)
+      } else {
+        result[rubric.id] = 0
+      }
     })
-    setScores(newScores)
-  }, [progress, scoreRubrics])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % scoreRubrics.length)
-    }, 300)
-    return () => clearInterval(interval)
-  }, [scoreRubrics.length])
+    return result
+  }, [progress, scoreRubrics, completedCount, isAllComplete])
 
   const overallScore = useMemo(() => {
     let weighted = 0, totalWeight = 0
@@ -691,35 +705,45 @@ function ScoringAnimation({ phase, progress }: { phase: AuditPhase; progress: nu
     <div className="relative h-64 rounded-lg bg-background/50 overflow-hidden border border-border/50 p-3">
       <div className="flex gap-3 h-full">
         <div className="flex-1 overflow-hidden">
-          <div className="text-[10px] text-muted-foreground mb-2 flex justify-between">
+          <div className="text-[10px] text-muted-foreground mb-2 flex justify-between px-2">
             <span>Rubric</span>
             <span>Score</span>
           </div>
-          <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+          <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1">
             {scoreRubrics.map((rubric, i) => {
               const score = scores[rubric.id] || 0
-              const isActive = activeIndex === i
-              const isComplete = score === rubric.target
+              const isComplete = isAllComplete || i < completedCount
+              const isCurrent = !isAllComplete && i === completedCount
+              const isPending = !isAllComplete && i > completedCount
 
               return (
-                <div key={rubric.id} className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all ${
-                  isActive && !isComplete ? "bg-accent text-white shadow-sm" : ""
+                <div key={rubric.id} className={`flex items-center gap-2 py-1.5 px-2 rounded-md transition-all duration-300 ${
+                  isCurrent ? "bg-accent text-white" : ""
                 }`}>
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    isActive && !isComplete ? "bg-white" : isComplete ? getBarColor(score) : "bg-muted"
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors duration-300 ${
+                    isCurrent ? "bg-white" : isComplete ? getBarColor(score) : "bg-muted"
                   }`} />
-                  <span className={`text-[10px] w-20 truncate ${
-                    isActive && !isComplete ? "text-white font-medium" : isComplete ? "text-foreground" : "text-muted-foreground"
+                  <span className={`text-[10px] w-20 truncate transition-colors duration-300 ${
+                    isCurrent ? "text-white font-medium" : isComplete ? "text-foreground" : "text-muted-foreground/50"
                   }`}>{rubric.label}</span>
-                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${isActive && !isComplete ? "bg-white/30" : "bg-muted/50"}`}>
-                    <div className={`h-full rounded-full transition-all duration-300 ${isActive && !isComplete ? "bg-white" : getBarColor(score)}`} style={{ width: `${score}%` }} />
+                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden transition-colors duration-300 ${
+                    isCurrent ? "bg-white/30" : "bg-muted/50"
+                  }`}>
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        isCurrent ? "bg-white" : score > 0 ? getBarColor(score) : "bg-transparent"
+                      }`}
+                      style={{ width: `${score}%` }}
+                    />
                   </div>
-                  <span className={`text-[10px] font-mono font-medium w-6 text-right tabular-nums ${
-                    isActive && !isComplete ? "text-white" : score > 0 ? getScoreColor(score) : "text-muted-foreground/40"
+                  <span className={`text-[10px] font-mono font-medium w-6 text-right tabular-nums transition-colors duration-300 ${
+                    isCurrent ? "text-white" : score > 0 ? getScoreColor(score) : "text-muted-foreground/30"
                   }`}>
                     {score > 0 ? score : "—"}
                   </span>
-                  <span className={`text-[8px] w-6 text-right ${isActive && !isComplete ? "text-white/70" : "text-muted-foreground/50"}`}>{rubric.weight}%</span>
+                  <span className={`text-[8px] w-5 text-right transition-colors duration-300 ${
+                    isCurrent ? "text-white/70" : "text-muted-foreground/40"
+                  }`}>{rubric.weight}%</span>
                 </div>
               )
             })}

@@ -37,6 +37,9 @@ export function useScannerProgress({
   const phaseTimings = getPhaseTimings(phases, totalDuration)
 
   // Calculate progress based on elapsed time
+  // Each phase reserves 15% of its duration as a "hold" period at 100%
+  const HOLD_RATIO = 0.15
+
   const updateProgress = useCallback(() => {
     if (!startTimeRef.current) return
 
@@ -51,7 +54,19 @@ export function useScannerProgress({
       const timing = phaseTimings[i]
       if (elapsed >= timing.startMs && elapsed < timing.endMs) {
         currentPhaseIndex = i
-        phaseProgress = ((elapsed - timing.startMs) / timing.durationMs) * 100
+
+        // Calculate progress with hold period
+        const phaseElapsed = elapsed - timing.startMs
+        const workDuration = timing.durationMs * (1 - HOLD_RATIO) // Time for 0-100%
+        const holdStart = workDuration // When hold begins
+
+        if (phaseElapsed >= holdStart) {
+          // In hold period - stay at 100%
+          phaseProgress = 100
+        } else {
+          // Still working - scale to fill 0-100% in workDuration
+          phaseProgress = (phaseElapsed / workDuration) * 100
+        }
         break
       } else if (elapsed >= timing.endMs) {
         currentPhaseIndex = i
