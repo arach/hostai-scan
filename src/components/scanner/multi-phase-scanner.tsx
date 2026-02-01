@@ -81,17 +81,13 @@ export function MultiPhaseScanner({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Domain label - beautiful sticker style */}
+      {/* Domain label - scanning text + domain pill */}
       {domain && (
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
-            <div className="relative">
-              <div className="w-2 h-2 rounded-full bg-accent" />
-              <div className="absolute inset-0 w-2 h-2 rounded-full bg-accent animate-ping" />
-            </div>
-            <span className="text-sm text-muted-foreground">Scanning</span>
-            <span className="text-base font-semibold text-foreground">{domain}</span>
-          </div>
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <span className="text-lg text-muted-foreground">Scanning</span>
+          <span className="px-4 py-1.5 rounded-lg bg-foreground/10 text-foreground font-semibold">
+            {domain}
+          </span>
         </div>
       )}
 
