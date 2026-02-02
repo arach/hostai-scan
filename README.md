@@ -1,95 +1,127 @@
 # HostAI Scan
 
-Website diagnostic tool for short-term rental businesses. Analyzes conversion blockers, performance issues, SEO health, and trust signals.
+Website diagnostic tool for short-term rental (STR) businesses. Scores websites on conversion, performance, SEO, and trust signals.
 
-## Features
-
-- **Multi-source analysis** - PageSpeed Insights, SEMrush, DataForSEO
-- **STR-specific scoring** - Weighted for vacation rental conversion factors
-- **Real-time scanning** - Animated multi-phase scanner UI
-- **Admin dashboard** - Deep dive into raw API data with formatted views
-
-## Quick Start
+## Getting Started
 
 ```bash
+# Install dependencies
 pnpm install
-cp .env.example .env.local  # Add your API keys
+
+# Set up environment
+cp .env.example .env.local
+
+# Run development server
 pnpm dev
 ```
 
+Open [http://localhost:3000](http://localhost:3000)
+
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SEMRUSH_API_KEY` | Yes | SEMrush API key for SEO metrics |
-| `DATAFORSEO_LOGIN` | Yes | DataForSEO account login |
-| `DATAFORSEO_PASSWORD` | Yes | DataForSEO account password |
-| `PAGESPEED_API_KEY` | No | Google PageSpeed API key (optional) |
-
-### BigQuery Export (Optional)
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `BIGQUERY_PROJECT_ID` | For export | GCP project ID |
-| `BIGQUERY_DATASET_ID` | For export | BigQuery dataset name |
-| `GOOGLE_CREDENTIALS_JSON` | For export | Service account JSON (stringified) |
-
-## BigQuery Export Setup
-
-Export audit data to BigQuery for analytics and reporting.
-
-### 1. Create a Service Account
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Navigate to **IAM & Admin → Service Accounts**
-3. Click **Create Service Account**
-   - Name: `hostai-bigquery-export`
-4. Grant roles: `BigQuery Data Editor` + `BigQuery Job User`
-5. Create a JSON key and download it
-
-### 2. Configure Credentials
-
-**For Vercel/Heroku** (JSON string):
 ```bash
-GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"...","private_key":"..."}
+# Required - API Keys
+SEMRUSH_API_KEY=           # SEMrush API for SEO metrics
+DATAFORSEO_LOGIN=          # DataForSEO credentials
+DATAFORSEO_PASSWORD=
+
+# Optional
+PAGESPEED_API_KEY=         # Google PageSpeed (works without, but rate-limited)
+ADMIN_PASSWORD=            # Admin dashboard access (default: none)
+
+# Database (auto-uses SQLite locally)
+TURSO_DATABASE_URL=        # Turso/LibSQL for production
+TURSO_AUTH_TOKEN=
+
+# Analytics (optional)
+NEXT_PUBLIC_GA_ID=         # Google Analytics 4
 ```
 
-**For local development** (file path):
+## Project Structure
+
+```
+src/
+├── app/                   # Next.js App Router
+│   ├── api/              # API routes
+│   │   ├── audit/        # Scan endpoints
+│   │   ├── analytics/    # Tracking endpoints
+│   │   ├── batches/      # Bulk import
+│   │   └── leads/        # Lead management
+│   ├── admin/            # Admin dashboard
+│   └── report/           # Public report pages
+├── components/           # React components
+├── lib/                  # Core logic
+│   ├── audit-storage.ts  # Audit CRUD
+│   ├── analytics.ts      # Event tracking
+│   ├── batch-storage.ts  # Bulk operations
+│   ├── lead-storage.ts   # Lead management
+│   ├── link-storage.ts   # Shareable links + UTM
+│   └── migrations/       # DB schema migrations
+└── types/                # TypeScript definitions
+```
+
+## Key APIs
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/audit/start` | POST | Start a new scan |
+| `/api/audit/status/[jobId]` | GET | Poll scan progress |
+| `/api/audit/[auditId]` | GET | Get completed audit |
+| `/api/audits` | GET | List all audits |
+| `/api/batches` | POST | Bulk import domains |
+| `/api/leads` | GET/POST | Lead management |
+
+## Running Scans
+
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/key.json"
+# Start a scan
+curl -X POST http://localhost:3000/api/audit/start \
+  -H "Content-Type: application/json" \
+  -d '{"domain": "example.com"}'
+
+# Response: { "jobId": "abc123", "status": "pending" }
+
+# Poll for completion
+curl http://localhost:3000/api/audit/status/abc123
 ```
 
-### 3. Usage
+## Admin Dashboard
 
-```typescript
-import { createBigQueryExporter } from "@/lib/export";
+Access at `/admin` (requires `ADMIN_PASSWORD` if set).
 
-const exporter = createBigQueryExporter({
-  projectId: process.env.BIGQUERY_PROJECT_ID!,
-  datasetId: process.env.BIGQUERY_DATASET_ID!,
-});
+Features:
+- View all scans with raw API data
+- Bulk import via CSV
+- Lead tracking and scoring
+- Analytics overview
 
-await exporter.exportAudit(auditResult);
-```
+## Database
 
-### Tables Created
+- **Local dev**: SQLite (auto-created at `local.db`)
+- **Production**: Turso/LibSQL (set `TURSO_*` env vars)
 
-| Table | Description |
-|-------|-------------|
-| `audits` | Main audit data with all scores and metrics |
-| `recommendations` | Individual recommendations per audit |
-| `categories` | Category scores per audit |
-
-## Deploy to Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farach%2Fhostai-scan&env=SEMRUSH_API_KEY,DATAFORSEO_LOGIN,DATAFORSEO_PASSWORD,PAGESPEED_API_KEY)
+Migrations run automatically on startup.
 
 ## Tech Stack
 
-- Next.js 16 (App Router)
-- TypeScript
-- Tailwind CSS
-- Lucide Icons
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: SQLite / Turso
+- **APIs**: PageSpeed Insights, SEMrush, DataForSEO
+
+## Common Tasks
+
+```bash
+# Type check
+pnpm tsc --noEmit
+
+# Lint
+pnpm lint
+
+# Build for production
+pnpm build
+```
 
 ## License
 

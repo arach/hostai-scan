@@ -1,0 +1,349 @@
+# Conversion Experience Explorer
+
+**Status:** Planned (Phase 3)
+**Dependencies:** Browserbase, Stagehand
+
+---
+
+## Overview
+
+An automated agent that navigates STR websites through the complete booking funnel to identify conversion friction points. Uses Browserbase for browser automation and Stagehand for AI-powered element interaction.
+
+## The Task
+
+Given any STR website homepage, the agent should:
+
+1. **Find a bookable unit** (property, room, SKU)
+2. **Select availability dates**
+3. **Navigate to checkout**
+4. **Document each step** with screenshots, timings, and friction notes
+
+This produces a structured report of the booking experience that feeds into our conversion scoring.
+
+---
+
+## Booking Flow Steps
+
+STR booking flows typically follow this pattern:
+
+### Step 1: Property Discovery
+- **Goal:** Find a bookable unit from the homepage
+- **Variants:**
+  - Single property site → CTA goes directly to booking
+  - Multi-property site → Property grid/list → Select one
+  - Location-based → Search by area → Filter → Select property
+- **Success:** Landed on a property detail page or booking widget
+- **Friction indicators:**
+  - No clear CTA above fold
+  - Requires search with no defaults
+  - More than 2 clicks to reach a property
+
+### Step 2: Property Detail Review
+- **Goal:** Understand the property and find booking action
+- **Elements to detect:**
+  - Photo gallery
+  - Amenities list
+  - Pricing indication
+  - Reviews/ratings
+  - Availability calendar or date picker
+  - "Book Now" / "Check Availability" CTA
+- **Friction indicators:**
+  - CTA below fold on mobile
+  - No pricing visible until date selection
+  - Calendar requires scrolling to find
+
+### Step 3: Date Selection
+- **Goal:** Select check-in and check-out dates
+- **Variants:**
+  - Inline calendar on property page
+  - Modal/popup date picker
+  - Separate availability page
+  - External booking engine redirect
+- **Success:** Dates selected, price displayed
+- **Friction indicators:**
+  - Calendar doesn't show availability status
+  - Minimum stay rules not visible until error
+  - Price changes unexpectedly after date selection
+  - Redirects to external domain
+
+### Step 4: Guest/Room Configuration
+- **Goal:** Specify guests, rooms, or unit options
+- **Elements:**
+  - Guest count selector
+  - Room type selection (if applicable)
+  - Add-ons (cleaning fee visibility, extras)
+- **Friction indicators:**
+  - Hidden fees revealed late
+  - Complex room/rate selection
+  - Required fields not clearly marked
+
+### Step 5: Checkout Initiation
+- **Goal:** Begin the actual booking transaction
+- **Variants:**
+  - Instant book → Direct to payment
+  - Inquiry first → Contact form
+  - Request to book → Pending approval
+  - External redirect → Lodgify, Hostaway, Guesty, etc.
+- **Success:** Reached checkout page OR inquiry form
+- **Friction indicators:**
+  - Account creation required before seeing total
+  - No guest checkout option
+  - Cancellation policy not visible
+  - Total price unclear or itemization hidden
+
+### Step 6: Checkout Form (Observation Only)
+- **Goal:** Document checkout form complexity
+- **DO NOT:** Enter real data or submit forms
+- **Observe:**
+  - Number of form fields
+  - Required vs optional fields
+  - Payment options available
+  - Trust signals (security badges, policies)
+  - Price breakdown visibility
+- **Friction indicators:**
+  - Excessive required fields
+  - No price breakdown
+  - Missing trust indicators
+  - Unclear cancellation terms
+
+---
+
+## Implementation with Stagehand
+
+### Setup
+
+```typescript
+import { Stagehand } from "@browserbasehq/stagehand";
+
+const stagehand = new Stagehand({
+  env: "BROWSERBASE",
+  apiKey: process.env.BROWSERBASE_API_KEY,
+  projectId: process.env.BROWSERBASE_PROJECT_ID,
+  modelName: "gpt-4o", // or "claude-sonnet-4-20250514"
+  modelApiKey: process.env.OPENAI_API_KEY,
+});
+
+await stagehand.init();
+```
+
+### Navigation Strategy
+
+Use Stagehand's `act()` for AI-powered interactions:
+
+```typescript
+// Step 1: Find a property
+await stagehand.act({
+  action: "Find and click on the first available property or rental unit"
+});
+
+// Step 2: Select dates
+await stagehand.act({
+  action: "Select check-in date of tomorrow and check-out date 3 days later"
+});
+
+// Step 3: Proceed to booking
+await stagehand.act({
+  action: "Click the button to book, reserve, or check availability"
+});
+```
+
+### Extracting Page State
+
+Use `extract()` to gather structured data:
+
+```typescript
+const propertyInfo = await stagehand.extract({
+  instruction: "Extract property details from this page",
+  schema: z.object({
+    propertyName: z.string(),
+    priceVisible: z.boolean(),
+    priceAmount: z.string().optional(),
+    hasDatePicker: z.boolean(),
+    hasBookingCTA: z.boolean(),
+    ctaText: z.string().optional(),
+  }),
+});
+```
+
+### Recording Each Step
+
+```typescript
+interface BookingStep {
+  step: number;
+  name: string;
+  url: string;
+  screenshot: string; // base64 or URL
+  timestamp: number;
+  durationMs: number;
+  success: boolean;
+  frictionNotes: string[];
+  extractedData: Record<string, unknown>;
+}
+
+async function recordStep(
+  stagehand: Stagehand,
+  stepName: string,
+  action: () => Promise<void>
+): Promise<BookingStep> {
+  const startTime = Date.now();
+  const startUrl = await stagehand.page.url();
+
+  try {
+    await action();
+
+    const screenshot = await stagehand.page.screenshot({
+      type: "png",
+      fullPage: false
+    });
+
+    return {
+      step: currentStep++,
+      name: stepName,
+      url: await stagehand.page.url(),
+      screenshot: screenshot.toString("base64"),
+      timestamp: startTime,
+      durationMs: Date.now() - startTime,
+      success: true,
+      frictionNotes: [],
+      extractedData: {},
+    };
+  } catch (error) {
+    return {
+      step: currentStep++,
+      name: stepName,
+      url: startUrl,
+      screenshot: "",
+      timestamp: startTime,
+      durationMs: Date.now() - startTime,
+      success: false,
+      frictionNotes: [error.message],
+      extractedData: {},
+    };
+  }
+}
+```
+
+---
+
+## Output Schema
+
+```typescript
+interface ConversionExplorerResult {
+  domain: string;
+  startedAt: string;
+  completedAt: string;
+  totalDurationMs: number;
+
+  // Journey summary
+  stepsCompleted: number;
+  stepsTotal: number;
+  reachedCheckout: boolean;
+  bookingType: "instant" | "inquiry" | "request" | "external" | "unknown";
+
+  // External redirects
+  crossDomain: boolean;
+  externalDomains: string[];
+  bookingEngineDetected: string | null;
+
+  // Friction analysis
+  totalClicks: number;
+  frictionScore: number; // 0-100, lower is better
+  frictionFactors: FrictionFactor[];
+
+  // Step-by-step journey
+  steps: BookingStep[];
+
+  // Session replay
+  browserbaseSessionId: string;
+  replayUrl: string;
+}
+
+interface FrictionFactor {
+  category: "navigation" | "pricing" | "trust" | "forms" | "technical";
+  severity: "high" | "medium" | "low";
+  description: string;
+  stepNumber: number;
+}
+```
+
+---
+
+## Friction Scoring Rules
+
+| Factor | Severity | Points |
+|--------|----------|--------|
+| No CTA above fold (mobile) | High | +25 |
+| Pricing hidden until checkout | High | +20 |
+| External domain redirect | High | +20 |
+| Account required before pricing | High | +15 |
+| More than 3 clicks to checkout | Medium | +10 |
+| Calendar shows no availability status | Medium | +10 |
+| Fees revealed late | Medium | +10 |
+| No guest checkout option | Medium | +10 |
+| Minimum stay error after date selection | Low | +5 |
+| Form has >10 required fields | Low | +5 |
+| No cancellation policy visible | Low | +5 |
+
+**Friction Score Interpretation:**
+- 0-20: Excellent (low friction)
+- 21-40: Good (minor friction)
+- 41-60: Needs improvement
+- 61-80: Significant friction
+- 81+: Severe conversion blockers
+
+---
+
+## Error Handling
+
+The explorer should gracefully handle:
+
+1. **Popups/Modals:** Cookie consents, newsletter popups, chat widgets
+2. **Dead ends:** No properties available, sold out dates
+3. **Infinite loops:** Detect if stuck on same page
+4. **Timeouts:** Max 60s per step, 5min total
+5. **CAPTCHAs:** Record as friction, don't attempt to solve
+6. **Login walls:** Record as friction, attempt guest path
+
+```typescript
+// Handle common blockers
+await stagehand.act({
+  action: "Close any cookie consent, popup, or modal that is blocking the page"
+});
+```
+
+---
+
+## Integration with Audit
+
+The Conversion Explorer runs as part of the crawl phase:
+
+```
+[Audit Start]
+    ↓
+[PageSpeed Collector] ─────────────┐
+[SEMrush Collector] ───────────────┼─→ [Parallel]
+[Conversion Explorer] ─────────────┘
+    ↓
+[Normalize & Score]
+    ↓
+[Generate Report]
+```
+
+Results feed into:
+- **Conversion category score** (40% weight)
+- **Booking flow findings** (friction factors become findings)
+- **Report artifacts** (screenshots, replay URL)
+
+---
+
+## Environment Variables
+
+```bash
+# Required for Conversion Explorer
+BROWSERBASE_API_KEY=bb_live_xxxxx
+BROWSERBASE_PROJECT_ID=proj_xxxxx
+
+# AI model for Stagehand (one required)
+OPENAI_API_KEY=sk-xxxxx        # For GPT-4o
+ANTHROPIC_API_KEY=sk-ant-xxxxx # For Claude
+```
