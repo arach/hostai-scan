@@ -1,0 +1,60 @@
+---
+title: Scoring System
+description: How scores are calculated
+---
+
+# Scoring System
+
+## Formula
+
+```
+Category Score = max(0, 100 - Σ penalties)
+Overall Score = Σ (category_score × weight)
+Penalty = severity_base × impact × confidence
+```
+
+## Grades
+
+| Score | Grade |
+|-------|-------|
+| 90-100 | A (Excellent) |
+| 80-89 | B (Good) |
+| 70-79 | C (Needs Work) |
+| 60-69 | D (Poor) |
+| 0-59 | F (Critical) |
+
+## Category Weights
+
+| Category | Weight |
+|----------|--------|
+| Conversion | 32% |
+| Performance | 18% |
+| Trust | 18% |
+| Content | 14% |
+| Analytics | 8% |
+| SEO | 7% |
+| Security | 3% |
+
+## Severity Bases
+
+| Severity | Base | Example |
+|----------|------|---------|
+| Blocker | 35 | No CTA, no HTTPS |
+| Major | 18 | Slow LCP, no reviews |
+| Minor | 8 | Thin description |
+| Trivial | 4 | No video |
+
+## Safety Clamps
+
+| Condition | Max Score |
+|-----------|-----------|
+| Any conversion blocker | 69 |
+| No HTTPS | 59 |
+
+## Report Outputs
+
+**Top Issues:** 7 highest-impact findings sorted by `impact × confidence + severity_bonus`
+
+**Fast Wins:** Up to 5 findings where `effort = "low"` and `impact ≥ 0.6`
+
+**Projected Score:** Score if blockers fixed (shows improvement potential)

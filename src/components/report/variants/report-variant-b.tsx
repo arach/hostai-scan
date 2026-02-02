@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { trackCTAClick } from "@/lib/ga"
 import type { AuditResult, AuditRecommendation } from "@/types/audit"
 import {
   Zap,
@@ -23,6 +24,7 @@ import {
 
 interface ReportVariantBProps {
   result: AuditResult
+  auditId?: string
   className?: string
 }
 
@@ -205,8 +207,15 @@ function RecommendationRow({ recommendation }: { recommendation: AuditRecommenda
   )
 }
 
-export function ReportVariantB({ result, className }: ReportVariantBProps) {
+export function ReportVariantB({ result, auditId, className }: ReportVariantBProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "issues">("overview")
+
+  // CTA click handler with GA tracking
+  const handleCTAClick = (ctaType: string, ctaLocation: string) => {
+    if (auditId) {
+      trackCTAClick(auditId, ctaType, ctaLocation)
+    }
+  }
 
   const criticalIssues = result.recommendations.filter((r) => r.status === "fail")
   const warningIssues = result.recommendations.filter((r) => r.status === "warning")
@@ -434,6 +443,7 @@ export function ReportVariantB({ result, className }: ReportVariantBProps) {
               href="https://hostai.app"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => handleCTAClick("get_started", "cta_section")}
               className="inline-flex items-center gap-2 bg-white text-gray-900 font-medium px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors"
             >
               Get Started

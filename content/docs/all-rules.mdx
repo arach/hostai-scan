@@ -1,0 +1,46 @@
+---
+title: All Rules
+description: Every audit rule in one table
+---
+
+# All Rules
+
+| Rule | Sev | Impact |
+|------|-----|--------|
+| `conversion.missing_primary_cta` | B | 0.95 |
+| `conversion.no_sticky_cta_mobile` | M | 0.75 |
+| `conversion.click_depth_high` | M/B | 0.75-0.90 |
+| `conversion.missing_cancellation` | M | 0.70 |
+| `conversion.fees_not_visible_early` | M | 0.65 |
+| `conversion.requires_account` | M | 0.60 |
+| `conversion.no_instant_booking` | m | 0.40 |
+| `conversion.cross_domain_booking` | m | 0.35 |
+| `performance.mobile_lcp_slow` | M/B | 0.70-0.90 |
+| `performance.cls_poor` | M/B | 0.55-0.75 |
+| `performance.inp_high` | M/B | 0.60-0.80 |
+| `performance.tbt_high` | M/B | 0.55-0.75 |
+| `trust.missing_reviews` | M | 0.70 |
+| `trust.missing_identity` | M | 0.65 |
+| `trust.stale_reviews` | m | 0.40 |
+| `trust.low_review_count` | m | 0.35 |
+| `trust.no_third_party_badges` | m | 0.30 |
+| `content.low_image_count` | M | 0.60 |
+| `content.no_direct_booking_benefits` | m | 0.45 |
+| `content.thin_description` | m | 0.40 |
+| `content.small_hero_image` | m | 0.35 |
+| `content.missing_local_content` | m | 0.30 |
+| `content.no_video` | t | 0.20 |
+| `seo.noindex_money_pages` | B | 0.80 |
+| `seo.sitemap_missing` | M | 0.45 |
+| `seo.schema_missing` | m | 0.30 |
+| `seo.missing_meta_descriptions` | m | 0.25 |
+| `security.no_https` | B | 0.95 |
+| `security.mixed_content` | M | 0.50 |
+| `security.weak_tls` | m | 0.30 |
+| `analytics.no_ga4` | M | 0.55 |
+| `analytics.no_meta_pixel` | m | 0.40 |
+| `analytics.no_tiktok_pixel` | t | 0.20 |
+
+**B**=Blocker(35) **M**=Major(18) **m**=Minor(8) **t**=Trivial(4) • Penalty=Sev×Impact×Confidence
+
+[View by category →](/docs/rules-reference)

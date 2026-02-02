@@ -65,3 +65,6 @@ local.db
 local.db-*
 .vercel
 .env*.local
+
+# Fumadocs generated
+.source/

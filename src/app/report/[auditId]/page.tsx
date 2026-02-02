@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 import { loadAudit } from "@/lib/audit-storage";
+import { getLinkByAuditId, isLinkExpired } from "@/lib/link-storage";
 import { PublicReportView } from "@/components/report";
 import { ReportVariantB } from "@/components/report/variants/report-variant-b";
 import { ReportVariantC } from "@/components/report/variants/report-variant-c";
+import { ExpiredReport } from "@/components/report/expired-report";
+import { GATracker } from "@/components/report/ga-tracker";
+import { AnalyticsTracker } from "@/components/report/analytics-tracker";
+import { EmailCaptureOverlay } from "@/components/report/email-capture";
 import type { AuditResult } from "@/types/audit";
 
 interface PageProps {
@@ -21,17 +26,49 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
+  // Check if the report link has expired
+  const linkSettings = await getLinkByAuditId(auditId);
+  if (linkSettings && isLinkExpired(linkSettings)) {
+    return (
+      <ExpiredReport
+        domain={audit.domain}
+        expiresAt={linkSettings.expiresAt ?? undefined}
+      />
+    );
+  }
+
   const result = audit.result as AuditResult;
 
   // Select variant based on query param
   switch (variant) {
     case "b":
-      return <ReportVariantB result={result} />;
+      return (
+        <>
+          <GATracker auditId={auditId} />
+          <AnalyticsTracker auditId={auditId} />
+          <EmailCaptureOverlay auditId={auditId} triggerPercent={80} />
+          <ReportVariantB result={result} auditId={auditId} />
+        </>
+      );
     case "c":
-      return <ReportVariantC result={result} />;
+      return (
+        <>
+          <GATracker auditId={auditId} />
+          <AnalyticsTracker auditId={auditId} />
+          <EmailCaptureOverlay auditId={auditId} triggerPercent={80} />
+          <ReportVariantC result={result} auditId={auditId} />
+        </>
+      );
     case "a":
     default:
-      return <PublicReportView result={result} />;
+      return (
+        <>
+          <GATracker auditId={auditId} />
+          <AnalyticsTracker auditId={auditId} />
+          <EmailCaptureOverlay auditId={auditId} triggerPercent={80} />
+          <PublicReportView result={result} auditId={auditId} />
+        </>
+      );
   }
 }
 

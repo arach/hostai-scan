@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemePicker } from "@/components/theme-picker";
+import { LinkBuilder } from "@/components/admin/link-builder";
 import type { AuditResult } from "@/types/audit";
 
 // ============================================================================
@@ -1927,6 +1928,15 @@ export default function AdminAuditDetailPage() {
                 );
               })}
             </nav>
+
+            {/* UTM Link Builder */}
+            <div className="mt-6 pt-6 border-t border-border/50">
+              <LinkBuilder
+                baseUrl={typeof window !== "undefined" ? `${window.location.origin}/report/${audit.id}` : `/report/${audit.id}`}
+                auditId={audit.id}
+                domain={audit.domain}
+              />
+            </div>
           </aside>
 
           {/* ================================================================== */}

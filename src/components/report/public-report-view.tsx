@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { HostAILogo } from "@/components/icons/hostai-logo"
+import { trackCTAClick } from "@/lib/ga"
 import type { AuditResult, AuditRecommendation } from "@/types/audit"
 import {
   Zap,
@@ -23,6 +24,7 @@ import {
 
 interface PublicReportViewProps {
   result: AuditResult
+  auditId?: string
   onReset?: () => void
   className?: string
 }
@@ -183,8 +185,15 @@ function IssueRow({ issue }: { issue: AuditRecommendation }) {
   )
 }
 
-export function PublicReportView({ result, onReset, className }: PublicReportViewProps) {
+export function PublicReportView({ result, auditId, onReset, className }: PublicReportViewProps) {
   const [showAllIssues, setShowAllIssues] = useState(false)
+
+  // CTA click handler with GA tracking
+  const handleCTAClick = (ctaType: string, ctaLocation: string) => {
+    if (auditId) {
+      trackCTAClick(auditId, ctaType, ctaLocation)
+    }
+  }
 
   const criticalCount = result.recommendations.filter(r => r.status === "fail").length
   const warningCount = result.recommendations.filter(r => r.status === "warning").length
@@ -362,6 +371,7 @@ export function PublicReportView({ result, onReset, className }: PublicReportVie
             href="https://hostai.app"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => handleCTAClick("get_started", "sticky_footer")}
             className="bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 px-5 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
           >
             Get Started

@@ -1,0 +1,191 @@
+---
+title: Photo Analysis
+description: Evaluate property photo count and quality for STR websites
+---
+
+# Photo Analysis
+
+**Status:** Planned
+**Category:** Content / Trust
+**Trigger:** Standard (count) / On-demand (quality)
+
+## Overview
+
+Evaluate property photos on STR websites. Photos are the primary selling point for vacation rentals—guests book based on visuals. This analysis has two tiers:
+
+1. **Standard (always run):** Photo count and basic metadata
+2. **Premium (on-demand):** AI-powered quality assessment
+
+## Tier 1: Photo Count & Metadata (Standard)
+
+Run on every audit. No AI costs.
+
+### What to Detect
+
+| Signal | Why It Matters |
+|--------|----------------|
+| Photo count per property | &lt;10 photos is a red flag for STR |
+| Gallery exists | Some sites hide photos or have broken galleries |
+| Hero image present | First impression, above-fold impact |
+| Photo dimensions | Low-res images hurt trust |
+| Alt text presence | Accessibility + SEO signal |
+| Lazy loading | Performance consideration |
+
+### Detection Approach
+
+```typescript
+const photoMetadata = await page.evaluate(() => {
+  const gallerySelectors = [
+    '[class*="gallery"]',
+    '[class*="photo"]',
+    '[class*="image-carousel"]',
+    '[class*="slider"]',
+  ];
+
+  const images = Array.from(document.querySelectorAll('img'));
+
+  // Filter to property photos (exclude icons, logos)
+  const propertyPhotos = images.filter(img => {
+    const dominated = img.naturalWidth > 200 && img.naturalHeight > 200;
+    const notIcon = !img.src.includes('icon') && !img.src.includes('logo');
+    return dominated && notIcon;
+  });
+
+  return {
+    totalImages: images.length,
+    propertyPhotos: propertyPhotos.length,
+    hasGallery: gallerySelectors.some(s => document.querySelector(s)),
+  };
+});
+```
+
+### Photo Inventory
+
+Collect all property photos into a structured inventory:
+
+```typescript
+interface PhotoInventoryItem {
+  index: number;
+  url: string;
+  thumbnailUrl?: string;
+  width: number;
+  height: number;
+  aspectRatio: string;      // "16:9", "4:3", "1:1", etc.
+  fileSize?: number;
+  format: "jpg" | "png" | "webp" | "avif" | "unknown";
+  alt: string | null;
+  isHero: boolean;
+  isLowRes: boolean;        // < 800px wide
+  lazyLoaded: boolean;
+  sourceLocation: "gallery" | "hero" | "inline" | "lightbox";
+}
+```
+
+Store inventory in `AuditArtifacts.photoInventory` for:
+- Admin review of collected photos
+- Input to premium AI analysis
+- Historical comparison
+
+### Scoring (Standard)
+
+| Condition | Severity | Penalty |
+|-----------|----------|---------|
+| No photos detected | Blocker | +35 |
+| &lt; 5 photos | Major | +15 |
+| 5-9 photos | Minor | +5 |
+| No hero image above fold | Major | +10 |
+| Hero image &lt; 800px wide | Minor | +5 |
+| &gt; 50% low-res images | Minor | +5 |
+
+**STR benchmark:** Top-performing listings have 20-30+ photos covering:
+- Exterior / entrance
+- Living spaces
+- Each bedroom
+- Kitchen
+- Bathrooms
+- Outdoor areas / views
+- Local area / amenities
+
+## Tier 2: Photo Quality Assessment (Premium)
+
+On-demand, AI-powered analysis. Triggered by:
+- User clicks "Deep Analysis"
+- Premium audit tier
+- API flag `includePhotoQuality: true`
+
+### What to Evaluate
+
+| Aspect | What AI Looks For |
+|--------|-------------------|
+| **Lighting** | Natural light, well-lit rooms, no dark corners |
+| **Composition** | Professional framing, straight lines, no clutter |
+| **Staging** | Furniture arrangement, decor, lived-in vs sterile |
+| **Resolution** | Sharp focus, no blur, appropriate size |
+| **Consistency** | Same style across photos, cohesive set |
+| **Authenticity** | Real photos vs stock, matches description |
+| **Room coverage** | All key rooms represented |
+| **Hero quality** | Is the lead image the most compelling? |
+
+### AI Prompt
+
+```typescript
+const PHOTO_QUALITY_PROMPT = `
+You are evaluating property photos for a vacation rental listing.
+
+Analyze this set of ${photoCount} property photos and provide:
+
+1. OVERALL_QUALITY (1-5)
+2. LIGHTING (1-5)
+3. COMPOSITION (1-5)
+4. STAGING (1-5)
+5. ROOM_COVERAGE - List rooms shown and gaps
+6. HERO_IMAGE_ASSESSMENT
+7. TOP_ISSUES - 1-3 specific improvements
+
+Respond in JSON format.
+`;
+```
+
+### Model Selection
+
+| Model | Cost per Analysis | Best For |
+|-------|-------------------|----------|
+| Gemini 2.0 Flash | ~$0.005 | Cost-efficient |
+| GPT-4o | ~$0.03 | Best quality |
+| Claude Sonnet | ~$0.04 | Detailed explanations |
+
+### Output Schema (Premium)
+
+```typescript
+interface PhotoQualityAnalysis {
+  overallQuality: number;  // 1-5
+  lighting: number;
+  composition: number;
+  staging: number;
+  roomsCovered: string[];
+  roomsMissing: string[];
+  coverageScore: number;
+  heroAssessment: string;
+  topIssues: string[];
+  improvements: string[];
+  comparisonToTypicalSTR: "below" | "average" | "above";
+  photosAnalyzed: number;
+  modelUsed: string;
+}
+```
+
+## Cost Considerations
+
+| Tier | When | Cost |
+|------|------|------|
+| Standard (metadata) | Every audit | $0 |
+| Premium (AI quality) | On-demand | ~$0.005-0.04 |
+
+Limit premium to 10 photos max per analysis to control costs.
+
+## Future Enhancements
+
+1. **Photo comparison to competitors** - "Your photos vs top STR sites in area"
+2. **Stock photo detection** - Flag if using generic stock images
+3. **Seasonal appropriateness** - Summer photos in winter listing
+4. **Photo-description match** - Does "ocean view" actually show ocean?

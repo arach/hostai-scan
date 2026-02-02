@@ -1,0 +1,78 @@
+---
+title: SEO Rules
+description: Rules that evaluate search engine discoverability
+---
+
+# SEO Rules
+
+SEO rules account for 7% of the overall score. They evaluate whether the site can be discovered by potential guests.
+
+## Why SEO Is Weighted Lower
+
+- Most STR traffic is direct or referral
+- OTAs dominate search results
+- Conversion matters more than discovery
+
+## Rules
+
+### sitemap_missing
+
+**No sitemap.xml found**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.45 |
+| Effort | Low |
+
+A sitemap helps search engines discover and index all pages.
+
+**Fix:** Generate and submit a sitemap to Google Search Console.
+
+---
+
+### schema_missing
+
+**No LocalBusiness or LodgingBusiness schema**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.30 |
+| Effort | Low |
+
+Structured data helps search engines understand what your site is about.
+
+**Fix:** Add LodgingBusiness or VacationRental schema markup.
+
+---
+
+### noindex_money_pages
+
+**Property or booking pages blocked from indexing**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Blocker |
+| Impact | 0.80 |
+| Effort | Low |
+
+If your most important pages have `noindex` tags, search engines won't show them.
+
+**Fix:** Remove noindex from revenue-generating pages.
+
+---
+
+### missing_meta_descriptions
+
+**Key pages missing meta descriptions**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.25 |
+| Effort | Low |
+
+Meta descriptions appear in search results.
+
+**Fix:** Add unique, compelling meta descriptions (150-160 characters).

@@ -1,0 +1,101 @@
+---
+title: Trust Rules
+description: Rules that assess whether the site establishes credibility
+---
+
+# Trust Rules
+
+Trust rules account for 20% of the overall score. They assess whether the site establishes enough credibility for guests to feel safe booking.
+
+## Why Trust Matters
+
+Guests are deciding whether to trust a stranger with their vacation—and their credit card. Unlike OTAs with built-in trust, direct booking sites must establish credibility independently.
+
+## Rules
+
+### missing_reviews
+
+**No reviews visible on site**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.70 |
+| Effort | Medium |
+
+Reviews are the most powerful trust signal. Without them, guests have no way to verify the property matches its description.
+
+**Fix:** Display reviews prominently—import from OTAs, add native reviews, or embed Google reviews.
+
+---
+
+### low_review_count
+
+**Fewer than 5 reviews displayed**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.35 |
+| Effort | Low |
+
+Five reviews is the minimum threshold for credibility.
+
+**Fix:** Actively collect reviews from past guests.
+
+---
+
+### stale_reviews
+
+**Most recent review older than 6 months**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.40 |
+| Effort | Low |
+
+Old reviews suggest the property may no longer be active.
+
+**Fix:** Follow up with recent guests to request reviews.
+
+---
+
+### missing_identity
+
+**No business name, phone number, or address visible**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.65 |
+| Effort | Low |
+
+Anonymous websites are suspicious. Guests want to know who they're dealing with.
+
+**Fix:** Display contact information prominently: phone, address, about page.
+
+---
+
+### no_third_party_badges
+
+**No Airbnb/VRBO/Google review badges**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.30 |
+| Effort | Low |
+
+If the property has good ratings on major platforms, displaying those badges transfers trust.
+
+**Fix:** Add platform badges or ratings widgets.
+
+---
+
+## Revenue Impact
+
+| Issue | Estimated Impact |
+|-------|------------------|
+| No reviews visible | -18% conversions |
+| Missing cancellation policy | -8% conversions |

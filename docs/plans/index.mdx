@@ -1,0 +1,40 @@
+---
+title: Roadmap
+description: Planned features for GetHost.AI
+---
+
+# Roadmap
+
+Planned features and enhancements. These specs are designed to guide implementation.
+
+## Phase 3: Browser Automation & AI
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| [Conversion Explorer](/docs/plans/conversion-explorer) | Planned | Navigate booking funnels to find friction |
+| [Photo Analysis](/docs/plans/photo-analysis) | Planned | Count and assess property photos |
+| [Review Detection](/docs/plans/review-detection) | Planned | Find reviews and trust badges |
+| [AI Visual Feedback](/docs/plans/ai-visual-feedback) | Planned | Vision model design analysis |
+
+## Dependencies
+
+These features require:
+
+```bash
+# Browserbase for browser automation
+BROWSERBASE_API_KEY=
+BROWSERBASE_PROJECT_ID=
+
+# AI models for analysis
+GEMINI_API_KEY=      # recommended
+OPENAI_API_KEY=      # alternative
+ANTHROPIC_API_KEY=   # alternative
+```
+
+## Implementation Priority
+
+1. **Review Detection** — Low complexity, high value for trust scoring
+2. **Photo Analysis (Standard)** — Photo count, no AI needed
+3. **Conversion Explorer** — Requires Stagehand, most complex
+4. **AI Visual Feedback** — Premium feature, on-demand
+5. **Photo Analysis (Premium)** — AI quality assessment, on-demand

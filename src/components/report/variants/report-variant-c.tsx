@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useId } from "react"
 import { cn } from "@/lib/utils"
+import { trackCTAClick } from "@/lib/ga"
 import type { AuditResult, AuditRecommendation } from "@/types/audit"
 import {
   Zap,
@@ -28,6 +29,7 @@ import {
 
 interface ReportVariantCProps {
   result: AuditResult
+  auditId?: string
   className?: string
 }
 
@@ -340,8 +342,15 @@ function StatsTicker({ result }: { result: AuditResult }) {
   )
 }
 
-export function ReportVariantC({ result, className }: ReportVariantCProps) {
+export function ReportVariantC({ result, auditId, className }: ReportVariantCProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  // CTA click handler with GA tracking
+  const handleCTAClick = (ctaType: string, ctaLocation: string) => {
+    if (auditId) {
+      trackCTAClick(auditId, ctaType, ctaLocation)
+    }
+  }
 
   // Filter recommendations by category
   const filteredRecs = selectedCategory
@@ -571,6 +580,7 @@ export function ReportVariantC({ result, className }: ReportVariantCProps) {
               href="https://hostai.app"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => handleCTAClick("get_started", "sticky_footer")}
               className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
             >
               Get Started
