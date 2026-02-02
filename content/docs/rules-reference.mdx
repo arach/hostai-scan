@@ -1,0 +1,132 @@
+---
+title: Rules by Category
+description: Rules organized by category
+---
+
+# Rules by Category
+
+[← View all in one table](/docs/all-rules)
+
+## Category Weights
+
+| Category | Weight | Focus |
+|----------|--------|-------|
+| Conversion | 32% | Booking flow friction |
+| Performance | 18% | Load speed, responsiveness |
+| Trust | 18% | Reviews, identity, credibility |
+| Content | 14% | Photos, descriptions, messaging |
+| Analytics | 8% | Tracking and measurement |
+| SEO | 7% | Discoverability |
+| Security | 3% | HTTPS, TLS |
+
+## Severity Scale
+
+| Severity | Points | Triggers Clamp? |
+|----------|--------|-----------------|
+| Blocker | 35 | Yes (max 69 for conversion, max 59 for no HTTPS) |
+| Major | 18 | No |
+| Minor | 8 | No |
+| Trivial | 4 | No |
+
+---
+
+## Conversion Rules (35%)
+
+| Rule ID | Title | Sev | Impact | Fix |
+|---------|-------|-----|--------|-----|
+| `missing_primary_cta` | No booking CTA above fold (mobile) | B | 0.95 | Add prominent CTA in hero section |
+| `no_sticky_cta_mobile` | No persistent CTA on scroll | M | 0.75 | Add sticky booking bar |
+| `click_depth_high` | >3 clicks to book | M/B | 0.75-0.90 | Streamline navigation |
+| `missing_cancellation` | Cancellation policy hidden | M | 0.70 | Show policy near CTA |
+| `fees_not_visible_early` | Fees hidden until checkout | M | 0.65 | Show full price breakdown early |
+| `requires_account` | Account required to book | M | 0.60 | Allow guest checkout |
+| `no_instant_booking` | Inquiry only, no instant book | m | 0.40 | Enable instant booking |
+| `cross_domain_booking` | Redirects to third-party | m | 0.35 | Embed booking on your domain |
+
+**Sev:** B=Blocker, M=Major, m=Minor
+
+---
+
+## Performance Rules (20%)
+
+| Rule ID | Title | Sev | Impact | Thresholds |
+|---------|-------|-----|--------|------------|
+| `mobile_lcp_slow` | Largest Contentful Paint slow | M/B | 0.70-0.90 | Good ≤2.5s, Poor >4s, Blocker >5s |
+| `cls_poor` | Layout shifts | M/B | 0.55-0.75 | Good ≤0.1, Poor >0.25 |
+| `inp_high` | Interaction lag | M/B | 0.60-0.80 | Good ≤200ms, Poor >500ms |
+| `tbt_high` | Main thread blocked | M/B | 0.55-0.75 | Good ≤300ms, Poor >600ms |
+
+**Common fixes:** Optimize images, defer JS, use CDN, code-split bundles.
+
+---
+
+## Trust Rules (20%)
+
+| Rule ID | Title | Sev | Impact | Fix |
+|---------|-------|-----|--------|-----|
+| `missing_reviews` | No reviews visible | M | 0.70 | Display reviews (native or import from OTAs) |
+| `missing_identity` | No business name/phone/address | M | 0.65 | Add contact info prominently |
+| `stale_reviews` | Most recent review >6 months | m | 0.40 | Request reviews from recent guests |
+| `low_review_count` | Fewer than 5 reviews | m | 0.35 | Collect more reviews |
+| `no_third_party_badges` | No Airbnb/Google badges | m | 0.30 | Add platform rating widgets |
+
+---
+
+## Content Rules (15%)
+
+| Rule ID | Title | Sev | Impact | Fix |
+|---------|-------|-----|--------|-----|
+| `low_image_count` | Fewer than 10 images | M | 0.60 | Add comprehensive photo coverage |
+| `no_direct_booking_benefits` | No "why book direct" messaging | m | 0.45 | Add savings/benefits messaging |
+| `thin_description` | Description under 100 words | m | 0.40 | Expand with features, amenities, area |
+| `small_hero_image` | Hero under 1200px wide | m | 0.35 | Use high-resolution photography |
+| `missing_local_content` | No local area info | m | 0.30 | Add things to do, restaurants |
+| `no_video` | No property video | t | 0.20 | Add walkthrough video |
+
+---
+
+## SEO Rules (7%)
+
+| Rule ID | Title | Sev | Impact | Fix |
+|---------|-------|-----|--------|-----|
+| `noindex_money_pages` | Property pages blocked from indexing | B | 0.80 | Remove noindex tags |
+| `sitemap_missing` | No sitemap.xml | M | 0.45 | Generate and submit sitemap |
+| `schema_missing` | No LodgingBusiness schema | m | 0.30 | Add structured data |
+| `missing_meta_descriptions` | Missing meta descriptions | m | 0.25 | Add unique descriptions |
+
+---
+
+## Security Rules (3%)
+
+| Rule ID | Title | Sev | Impact | Fix |
+|---------|-------|-----|--------|-----|
+| `no_https` | No HTTPS (caps score at 59) | B | 0.95 | Enable HTTPS via Let's Encrypt |
+| `mixed_content` | HTTP assets on HTTPS pages | M | 0.50 | Update all URLs to HTTPS |
+| `weak_tls` | SSL Labs grade below B | m | 0.30 | Disable TLS 1.0/1.1, update ciphers |
+
+---
+
+## Analytics Rules (5%)
+
+| Rule ID | Title | Sev | Impact | Fix |
+|---------|-------|-----|--------|-----|
+| `no_ga4` | Google Analytics 4 not detected | M | 0.55 | Install GA4 tracking code |
+| `no_meta_pixel` | Meta (Facebook) Pixel not detected | m | 0.40 | Install Meta Pixel for retargeting |
+| `no_tiktok_pixel` | TikTok Pixel not detected | t | 0.20 | Install TikTok Pixel if targeting younger demos |
+
+---
+
+## Revenue Impact Estimates
+
+| Issue | Est. Conversion Loss |
+|-------|---------------------|
+| Mobile LCP >5s | -25% |
+| No CTA above fold | -20% |
+| No reviews | -18% |
+| Account required | -15% |
+| Mobile LCP 3-5s | -15% |
+| Hidden fees | -12% |
+| >3 clicks to book | -10% per click |
+| Missing cancellation | -8% |
+
+*Directional estimates from industry research, not guarantees.*

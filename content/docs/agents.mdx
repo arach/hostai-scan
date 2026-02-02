@@ -1,0 +1,136 @@
+---
+title: Agent Reference
+description: Technical spec for AI agents working with the rules system
+---
+
+# Agent Reference
+
+Technical reference for implementing/extending the scoring rules system.
+
+## Critical Rules
+
+| # | Rule |
+|---|------|
+| 1 | **Determinism** — Same input → same output. No randomness. |
+| 2 | **Evidence required** — Every finding needs `evidence: string[]` with specific metrics. |
+| 3 | **Pure functions** — Rules are `(audit: NormalizedAudit) => Finding \| null`. No side effects. |
+| 4 | **Penalty formula** — `severityBase × impact × confidence` |
+| 5 | **Clamps override** — Conversion blocker → max 69, no HTTPS → max 59 |
+
+## Directory Structure
+
+```
+src/
+├── types/           # NormalizedAudit, Finding, ScoringOutput
+├── rules/{category}/ # Rule implementations
+├── scoring/         # Aggregation, clamps
+└── collectors/      # Data collection (Phase 2)
+```
+
+## Finding Type
+
+```typescript
+interface Finding {
+  id: string;           // "category.rule_name"
+  title: string;
+  category: ScoreCategory;
+  severity: "blocker" | "major" | "minor" | "trivial";
+  impact: number;       // 0-1
+  confidence: number;   // 0-1
+  penalty: number;      // calculated
+  evidence: string[];   // REQUIRED
+  fix: string;
+  effort: "low" | "medium" | "high";
+  tags: string[];
+}
+```
+
+## Rule Template
+
+```typescript
+export const RULE_ID = 'category.rule_name';
+
+export function evaluate(audit: NormalizedAudit): Finding | null {
+  // 1. Guard clause
+  if (!audit.crawl?.pages?.home) return null;
+
+  // 2. Detection
+  const hasIssue = /* logic */;
+  if (!hasIssue) return null;
+
+  // 3. Evidence (REQUIRED)
+  const evidence = [`Metric: ${value} (threshold: ${threshold})`];
+
+  // 4. Return finding
+  return {
+    id: RULE_ID,
+    title: 'Title',
+    category: 'conversion',
+    severity: 'major',
+    impact: 0.65,
+    confidence: 0.85,
+    penalty: 18 * 0.65 * 0.85,
+    evidence,
+    fix: 'Recommendation',
+    effort: 'medium',
+    tags: [],
+  };
+}
+```
+
+## Severity & Impact Guide
+
+| Severity | Points | When to use |
+|----------|--------|-------------|
+| blocker | 35 | Prevents conversions entirely |
+| major | 18 | Significant UX/trust impact |
+| minor | 8 | Notable but moderate |
+| trivial | 4 | Nice-to-have |
+
+| Impact | Range | Examples |
+|--------|-------|----------|
+| Critical | 0.9-1.0 | Primary CTA, checkout |
+| High | 0.7-0.9 | Reviews, pricing |
+| Medium | 0.5-0.7 | Content quality, speed |
+| Low | 0.3-0.5 | Polish items |
+| Minimal | 0.1-0.3 | Edge cases |
+
+## Evidence Examples
+
+**Good:**
+```typescript
+evidence: [
+  'Mobile LCP: 4.2s (threshold: 2.5s)',
+  'Largest element: hero.jpg (1.8MB)',
+]
+```
+
+**Bad:**
+```typescript
+evidence: ['Page is slow', 'Consider optimizing']
+```
+
+## Adding a Rule Checklist
+
+- [ ] Create `src/rules/{category}/{rule-name}.ts`
+- [ ] Export `RULE_ID` as `'{category}.{snake_case}'`
+- [ ] Export `evaluate(audit): Finding | null`
+- [ ] Guard clause for missing data
+- [ ] Build evidence array with metrics
+- [ ] Calculate penalty: `severityBase × impact × confidence`
+- [ ] Register in category index
+- [ ] Write tests (pass, fail, missing data cases)
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Empty evidence | Always include ≥1 specific metric |
+| Missing guard | Check `audit.module?.field` before access |
+| Wrong penalty | Use formula: `base × impact × confidence` |
+| Side effects | Rules must be pure functions |
+| Non-deterministic | No `Math.random()`, no `new Date()` |
+
+## All Rules Quick Reference
+
+See [Rules Reference](/docs/rules-reference) for complete table of all 30 rules.

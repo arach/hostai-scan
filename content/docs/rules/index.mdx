@@ -1,0 +1,57 @@
+---
+title: Audit Rules Overview
+description: How the GetHost.AI rule system detects and reports issues
+---
+
+# Audit Rules Overview
+
+GetHost.AI's diagnostic tool evaluates short-term rental websites using a comprehensive rule system. Each rule detects a specific issue and produces an evidence-based finding.
+
+## How Rules Work
+
+Rules are pure functions that examine audit data and return findings when issues are detected. A rule either finds a problem (returns a Finding) or doesn't (returns null).
+
+```
+Rule Input: NormalizedAudit (all collected data about the site)
+Rule Output: Finding | null
+```
+
+Every finding includes:
+- **Severity** — How critical is this issue?
+- **Impact** — How much does it affect conversions?
+- **Evidence** — Specific metrics proving the issue exists
+- **Fix** — Actionable recommendation to resolve it
+
+## Categories
+
+Rules are organized into six categories, weighted by their importance to booking conversions:
+
+| Category | Weight | Focus |
+|----------|--------|-------|
+| [Conversion](/docs/rules/conversion) | 35% | Can users actually complete a booking? |
+| [Performance](/docs/rules/performance) | 20% | Does the site load fast enough? |
+| [Trust](/docs/rules/trust) | 20% | Would guests trust this site with their credit card? |
+| [Content](/docs/rules/content) | 15% | Are photos, descriptions, and messaging compelling? |
+| [SEO](/docs/rules/seo) | 7% | Can potential guests find this site? |
+| [Security](/docs/rules/security) | 3% | Is the site safe for transactions? |
+
+## Severity Levels
+
+| Level | Points | Meaning |
+|-------|--------|---------|
+| **Blocker** | 35 | Critical issue that prevents conversions |
+| **Major** | 18 | Significant problem that hurts conversions |
+| **Minor** | 8 | Notable issue with moderate impact |
+| **Trivial** | 4 | Nice-to-have improvement |
+
+## Evidence-Based Approach
+
+Every finding must include specific evidence. Instead of vague statements like "your site is slow," rules cite exact metrics:
+
+**Good finding:**
+> Mobile LCP: 4.2 seconds (threshold: 2.5s). Largest element: hero image at 1.2MB.
+
+**Bad finding:**
+> The page loads slowly on mobile devices.
+
+This evidence-based approach ensures findings are actionable and verifiable.

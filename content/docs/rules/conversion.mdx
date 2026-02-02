@@ -1,0 +1,146 @@
+---
+title: Conversion Rules
+description: Rules that detect issues preventing users from completing bookings
+---
+
+# Conversion Rules
+
+Conversion rules are the most important category (35% of overall score). They answer the fundamental question: **Can users actually book a stay?**
+
+## Why Conversion Matters Most
+
+A beautiful, fast website means nothing if guests can't figure out how to book. These rules detect friction in the booking funnel that causes abandonment.
+
+## Rules
+
+### missing_primary_cta
+
+**Primary booking CTA not visible above fold (mobile)**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Blocker |
+| Impact | 0.95 |
+| Effort | Medium |
+
+Guests arriving on mobile should see a clear booking button without scrolling. If the primary CTA is buried below the fold, many visitors will leave before discovering how to book.
+
+**Fix:** Add a prominent "Book Now" or "Check Availability" button in the hero section, visible without scrolling on mobile.
+
+---
+
+### no_sticky_cta_mobile
+
+**No persistent booking CTA on mobile**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.75 |
+| Effort | Medium |
+
+As mobile users scroll through property details, they should always have a booking option visible. A sticky bottom bar or floating button keeps the action accessible.
+
+**Fix:** Add a persistent "Book Now" bar that stays visible as users scroll through property pages.
+
+---
+
+### click_depth_high
+
+**Booking requires too many clicks from home**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major (3-4 clicks) / Blocker (5+ clicks) |
+| Impact | 0.75–0.90 |
+| Effort | Medium |
+
+Every additional click between landing and booking is an opportunity to lose the guest. The booking flow should be reachable in 3 clicks or fewer.
+
+**Fix:** Streamline navigation. Add direct booking links to property cards. Consider booking widgets directly on listing pages.
+
+---
+
+### missing_cancellation
+
+**Cancellation policy not visible near booking CTA**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.70 |
+| Effort | Low |
+
+Guests hesitate to book when cancellation terms are unclear. The policy should be visible before they enter payment details.
+
+**Fix:** Display a brief cancellation summary near booking buttons.
+
+---
+
+### fees_not_visible_early
+
+**Fees and taxes hidden until checkout**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.65 |
+| Effort | Medium |
+
+"Drip pricing" frustrates guests. When fees appear only at checkout, it feels deceptive and causes abandonment.
+
+**Fix:** Show the full price breakdown early—ideally on the property page or at the start of booking.
+
+---
+
+### requires_account
+
+**Account creation required to book**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.60 |
+| Effort | Medium |
+
+Forcing account creation before booking adds friction. Many guests will abandon rather than create yet another account.
+
+**Fix:** Allow guest checkout. Offer account creation as optional after booking is complete.
+
+---
+
+### no_instant_booking
+
+**No instant booking option (inquiry only)**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.40 |
+| Effort | High |
+
+Modern travelers expect to book instantly. Inquiry-only flows introduce uncertainty and delays.
+
+**Fix:** Enable instant booking with real-time availability.
+
+---
+
+### cross_domain_booking
+
+**Booking hands off to third-party domain**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.35 |
+| Effort | High |
+
+When booking redirects to a different domain, guests may question legitimacy.
+
+**Fix:** If using a third-party booking engine, embed it on your domain or use a subdomain.
+
+---
+
+## Impact on Score
+
+Conversion issues have the highest scoring impact. Any conversion **blocker** caps the overall score at 69 (grade D), regardless of how well other areas perform.

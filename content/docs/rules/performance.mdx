@@ -1,0 +1,105 @@
+---
+title: Performance Rules
+description: Rules that detect slow loading and poor user experience
+---
+
+# Performance Rules
+
+Performance rules account for 20% of the overall score. They measure whether the site loads fast enough to retain visitors, especially on mobile.
+
+## Core Web Vitals
+
+Performance rules are based on Google's Core Web Vitals:
+
+| Metric | Measures | Good | Poor |
+|--------|----------|------|------|
+| LCP | Loading speed | ≤2.5s | >4s |
+| CLS | Visual stability | ≤0.1 | >0.25 |
+| INP | Responsiveness | ≤200ms | >500ms |
+| TBT | Main thread blocking | ≤300ms | >600ms |
+
+## Rules
+
+### mobile_lcp_slow
+
+**Mobile Largest Contentful Paint too slow**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major (>3s) / Blocker (>5s) |
+| Impact | 0.70–0.90 |
+| Effort | Medium |
+
+LCP measures when the largest visible element finishes loading. Slow LCP means guests stare at incomplete screens.
+
+**Common fixes:**
+- Optimize images (compress, use WebP)
+- Implement lazy loading
+- Use a CDN
+- Reduce server response time
+
+---
+
+### cls_poor
+
+**Cumulative Layout Shift too high**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major (>0.1) / Blocker (>0.25) |
+| Impact | 0.55–0.75 |
+| Effort | Medium |
+
+CLS measures visual stability—how much the page "jumps" as it loads.
+
+**Common fixes:**
+- Set explicit width/height on images
+- Reserve space for dynamic content
+- Avoid inserting content above existing content
+
+---
+
+### inp_high
+
+**Interaction to Next Paint too slow**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major (>200ms) / Blocker (>500ms) |
+| Impact | 0.60–0.80 |
+| Effort | High |
+
+INP measures how quickly the page responds to user interactions.
+
+**Common fixes:**
+- Break up long JavaScript tasks
+- Defer non-critical scripts
+- Optimize event handlers
+
+---
+
+### tbt_high
+
+**Total Blocking Time too high**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major (>300ms) / Blocker (>600ms) |
+| Impact | 0.55–0.75 |
+| Effort | High |
+
+TBT measures how long the main thread is blocked, preventing interaction.
+
+**Common fixes:**
+- Defer non-critical JavaScript
+- Remove unused code
+- Code-split large bundles
+
+---
+
+## Revenue Impact
+
+| Issue | Estimated Impact |
+|-------|------------------|
+| Mobile LCP >5s | -25% mobile conversions |
+| Mobile LCP 3–5s | -15% mobile conversions |

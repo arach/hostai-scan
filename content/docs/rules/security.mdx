@@ -1,0 +1,71 @@
+---
+title: Security Rules
+description: Rules that verify basic security requirements
+---
+
+# Security Rules
+
+Security rules account for 3% of the overall score. They verify that basic security requirements are met.
+
+## Why Security Is Low Weight (But Critical)
+
+Security has low weight because it's table stakes—most sites pass. However, security failures have severe consequences: missing HTTPS caps the maximum score at 59.
+
+## Rules
+
+### no_https
+
+**Site not served over HTTPS**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Blocker |
+| Impact | 0.95 |
+| Effort | Medium |
+
+HTTPS is mandatory for any site handling personal or payment information.
+
+**Fix:** Enable HTTPS via Let's Encrypt or your hosting provider.
+
+**Score Impact:** Caps overall score at 59 regardless of other performance.
+
+---
+
+### mixed_content
+
+**HTTP assets loaded on HTTPS pages**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.50 |
+| Effort | Low |
+
+Mixed content occurs when an HTTPS page loads resources over HTTP.
+
+**Fix:** Update all resource URLs to HTTPS.
+
+---
+
+### weak_tls
+
+**SSL/TLS configuration weak**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.30 |
+| Effort | Medium |
+
+Outdated TLS configurations may support deprecated protocols.
+
+**Fix:** Disable TLS 1.0/1.1, remove weak cipher suites.
+
+---
+
+## HTTPS Is Non-Negotiable
+
+As of 2026, there is no legitimate reason for a booking site to lack HTTPS:
+- Free certificates via Let's Encrypt
+- Most hosting providers enable by default
+- Browsers actively warn about HTTP sites

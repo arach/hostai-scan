@@ -1,9 +1,7 @@
-import type { NextConfig } from "next";
+import { createMDX } from 'fumadocs-mdx/next';
 
-const nextConfig: NextConfig = {
-  turbopack: {
-    root: process.cwd(),
-  },
-};
+const withMDX = createMDX();
 
-export default nextConfig;
+export default withMDX({
+  reactStrictMode: true,
+});
