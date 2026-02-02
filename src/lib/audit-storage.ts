@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, initializeDatabase } from "./db";
 
 // Track if schema has been initialized
 let schemaInitialized = false;
@@ -12,6 +12,9 @@ async function ensureSchema() {
   console.log("[Storage] Initializing schema...");
 
   try {
+    // Run migrations first
+    await initializeDatabase();
+
     await db.execute(`
       CREATE TABLE IF NOT EXISTS audits (
         id TEXT PRIMARY KEY,
@@ -20,7 +23,8 @@ async function ensureSchema() {
         created_at TEXT NOT NULL,
         completed_at TEXT,
         result TEXT,
-        error TEXT
+        error TEXT,
+        score INTEGER
       )
     `);
     console.log("[Storage] Table created");
@@ -31,6 +35,10 @@ async function ensureSchema() {
 
     await db.execute(`
       CREATE INDEX IF NOT EXISTS idx_audits_created ON audits(created_at DESC)
+    `);
+
+    await db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_audits_score ON audits(score)
     `);
     console.log("[Storage] Indexes created");
 
