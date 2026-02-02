@@ -1,0 +1,212 @@
+---
+title: AI Visual Feedback
+description: Vision model analysis for design and UX assessment
+---
+
+# AI-Powered Visual Feedback
+
+**Status:** Planned (Phase 3)
+**Trigger:** On-demand / Premium
+
+## Overview
+
+Use vision models to analyze screenshots and provide qualitative design feedback that quantitative rules cannot assess.
+
+### What Quantitative Scoring Misses
+
+Our deterministic scoring engine measures:
+- Performance metrics (LCP, CLS, INP)
+- Technical signals (HTTPS, sitemap, schema)
+- Conversion elements (CTA detection, click depth)
+
+But quantitative rules cannot assess:
+- **Visual hierarchy**: Is the booking CTA visually dominant?
+- **Aesthetic quality**: Does the site look professional or dated?
+- **Trust perception**: Do photos feel authentic?
+- **Brand coherence**: Is there visual consistency?
+- **Emotional response**: Would a guest feel excited to stay here?
+
+## Screenshot Capture
+
+We use Browserbase for screenshot capture:
+
+```typescript
+const page = await browser.newPage();
+await page.setViewport({ width: 1440, height: 900 });
+await page.goto(url, { waitUntil: 'networkidle' });
+const screenshot = await page.screenshot({
+  type: 'png',
+  fullPage: false // Above-fold only
+});
+```
+
+**Recommended captures per audit:**
+
+| Page | Mobile | Desktop |
+|------|--------|---------|
+| Home | Yes | Yes |
+| Property | Yes | Yes |
+| Booking | Yes | No |
+
+Total: 5 screenshots per audit (~100-200KB each).
+
+## Vision Model Comparison
+
+| Model | Input Cost | Output Cost | Latency | Notes |
+|-------|------------|-------------|---------|-------|
+| **Gemini 2.0 Flash** | $0.10/M tokens | $0.40/M tokens | ~1-2s | Best price, recommended |
+| **GPT-4o** | $2.50/M tokens | $10.00/M tokens | ~2-3s | Strong reasoning |
+| **GPT-4o-mini** | $0.15/M tokens | $0.60/M tokens | ~1-2s | Good balance |
+| **Claude Sonnet** | $3.00/M tokens | $15.00/M tokens | ~2-3s | Batch API at 50% off |
+
+**Recommendation:** Gemini 2.0 Flash for cost efficiency. ~$0.003 per audit for 5 screenshots.
+
+## Analysis Prompt
+
+```typescript
+const VISUAL_AUDIT_PROMPT = `
+You are a UX expert evaluating a vacation rental website screenshot.
+Analyze this ${viewport} screenshot of the ${pageType} page.
+
+Provide structured feedback:
+
+1. VISUAL_HIERARCHY (score 1-5)
+   - Is the primary CTA immediately visible?
+   - What draws the eye first?
+
+2. TRUST_SIGNALS (score 1-5)
+   - Does the design look professional?
+   - Are photos high quality?
+
+3. BRAND_QUALITY (score 1-5)
+   - Is the design modern or dated?
+   - Typography and color consistency?
+
+4. STR_SPECIFIC (score 1-5)
+   - Do images convey the experience?
+   - Is pricing/availability visible?
+
+For each category, provide:
+- Score (1-5)
+- One-sentence observation
+- One actionable recommendation
+
+Respond in valid JSON.
+`;
+```
+
+## Output Schema
+
+```typescript
+interface VisualAIAnalysis {
+  visualHierarchy: CategoryScore;
+  trustSignals: CategoryScore;
+  brandQuality: CategoryScore;
+  strSpecific: CategoryScore;
+  overallImpression: string;
+  topIssue: string;
+  additionalNotes?: string;
+}
+
+interface CategoryScore {
+  score: 1 | 2 | 3 | 4 | 5;
+  observation: string;
+  recommendation: string;
+}
+```
+
+## Presenting Results
+
+**Option A: Separate Section**
+
+```
+┌─────────────────────────────────────┐
+│ Overall Score: 67/100               │
+│ ─────────────────────────────────── │
+│ Conversion: 58  Performance: 72     │
+├─────────────────────────────────────┤
+│ 🎨 AI Design Review                 │
+│ ─────────────────────────────────── │
+│ Visual Hierarchy: ⭐⭐⭐☆☆           │
+│ "The booking CTA competes with      │
+│  navigation for attention..."       │
+└─────────────────────────────────────┘
+```
+
+**Option B: Integrated Findings**
+
+Add visual findings to findings array with `ai-generated` tag:
+
+```typescript
+interface Finding {
+  // ...existing fields
+  tags: string[];       // Add "ai-visual" tag
+  aiGenerated?: boolean; // Flag for transparency
+}
+```
+
+**Recommendation:** Start with Option A (separate section) for transparency.
+
+## Risk Mitigations
+
+### Consistency
+- Temperature 0 for deterministic output
+- Structured JSON schema forces consistent structure
+- Cache responses by screenshot hash
+
+### Hallucination
+- Frame as "AI observations" not "findings"
+- Never let AI findings override deterministic rules
+- AI cannot create "blocker" severity findings
+- Include disclaimer: "AI-generated insights require verification"
+
+```typescript
+function sanitizeAIFindings(findings: AIFinding[]): Finding[] {
+  return findings.map(f => ({
+    ...f,
+    severity: f.severity === 'blocker' ? 'major' : f.severity,
+    tags: [...f.tags, 'ai-generated'],
+    aiGenerated: true,
+  }));
+}
+```
+
+## Cost Per Audit
+
+| Scenario | Screenshots | AI Cost |
+|----------|-------------|---------|
+| Minimal (Gemini Flash) | 5 | $0.003 |
+| Standard (GPT-4o-mini) | 5 | $0.008 |
+| Premium (GPT-4o) | 5 | $0.025 |
+
+At 1,000 audits/month with Gemini Flash: **~$3/month** for visual AI.
+
+## Integration
+
+Visual AI runs after screenshots are captured but before final scoring:
+
+```
+[Crawl Collector]
+    ↓ captures screenshots
+[PSI Collector]
+    ↓
+[Visual AI Collector] ← NEW
+    ↓ parallel with scoring
+[Scoring Engine]
+    ↓
+[Report Generator]
+```
+
+## MVP Scope
+
+**MVP (1 week):**
+- Single model (Gemini 2.0 Flash)
+- 3 screenshots: home (mobile), home (desktop), property (mobile)
+- Structured JSON output only
+- Separate "AI Design Review" section in report
+
+**Full Vision (additional 2 weeks):**
+- Model fallback (Gemini → GPT-4o-mini)
+- All 5 screenshot types
+- Hybrid structured + free-form output
+- A/B testing for prompt optimization
