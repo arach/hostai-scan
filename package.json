@@ -4,11 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "dev": "turbo run dev:app",
-    "dev:app": "next dev",
-    "build": "turbo build",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
-    "lint": "turbo lint"
+    "lint": "eslint"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^7.9.4",
@@ -16,6 +15,9 @@
     "chrome-launcher": "^1.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fumadocs-core": "^16.5.0",
+    "fumadocs-mdx": "^14.2.6",
+    "fumadocs-ui": "^16.5.0",
     "lighthouse": "^13.0.1",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/mdx": "^2.0.13",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
@@ -35,7 +38,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "turbo": "^2.8.1",
     "typescript": "^5"
   }
 }

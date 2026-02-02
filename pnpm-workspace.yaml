@@ -1,7 +1,3 @@
-packages:
-  - '.'
-  - 'docs-site'
-
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

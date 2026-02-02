@@ -2,8 +2,9 @@
 
 import { Clock, RefreshCw, Home } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface ExpiredReportProps {
   domain?: string;
@@ -52,18 +53,14 @@ export function ExpiredReport({ domain, expiresAt }: ExpiredReportProps) {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Button asChild variant="outline">
-                <Link href="/">
-                  <Home className="w-4 h-4" />
-                  Go Home
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/admin">
-                  <RefreshCw className="w-4 h-4" />
-                  New Audit
-                </Link>
-              </Button>
+              <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
+                <Home className="w-4 h-4" />
+                Go Home
+              </Link>
+              <Link href="/admin" className={cn(buttonVariants())}>
+                <RefreshCw className="w-4 h-4" />
+                New Audit
+              </Link>
             </div>
           </div>
         </CardContent>
