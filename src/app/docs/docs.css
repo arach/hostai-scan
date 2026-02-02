@@ -1,0 +1,10 @@
+/**
+ * HostAI Docs Theme
+ *
+ * Based on fumadoro theme system.
+ * Uses tokens + preset + base structure.
+ */
+
+@import './themes/tokens.css';
+@import './themes/preset-hostai.css';
+@import './themes/base.css';

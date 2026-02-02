@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
-@import "fumadocs-ui/css/preset.css";
 
 /* HostAI Theme - Light Mode (Default) */
 :root {
@@ -64,16 +62,17 @@
 
 /* HostAI Theme - Dark Mode */
 .dark {
-  /* Fumadocs dark theme variables */
-  --color-fd-background: #001821;
-  --color-fd-muted: #122831;
-  --color-fd-muted-foreground: #afb7b9;
-  --color-fd-foreground: #edefef;
-  --color-fd-border: #2c4047;
-
   /* Base colors - Dark */
   --background: hsl(222 47% 6%);
   --foreground: hsl(210 40% 96%);
+
+  /* Fumadocs dark theme - aligned with main app */
+  --color-fd-background: hsl(222 47% 6%);
+  --color-fd-muted: hsl(217 33% 15%);
+  --color-fd-muted-foreground: hsl(215 20% 65%);
+  --color-fd-foreground: hsl(210 40% 96%);
+  --color-fd-border: hsl(217 33% 20%);
+  --color-fd-primary: hsl(243 66% 65%);
 
   /* Card/Surface colors - Dark */
   --card: hsl(222 47% 9%);
@@ -81,28 +80,28 @@
 
   /* Muted/Secondary - Dark */
   --muted: hsl(217 33% 15%);
-  --muted-foreground: hsl(215 20% 55%);
+  --muted-foreground: hsl(215 20% 65%);
 
-  /* Primary - Gold accent for dark mode */
-  --primary: hsl(43 74% 52%);
-  --primary-foreground: hsl(222 47% 6%);
+  /* Primary - Keep purple brand in dark mode */
+  --primary: hsl(243 66% 65%);
+  --primary-foreground: hsl(0 0% 100%);
 
   /* Secondary - Dark */
   --secondary: hsl(217 33% 17%);
   --secondary-foreground: hsl(210 40% 96%);
 
-  /* Accent - Gold for dark mode */
-  --accent: hsl(43 74% 52%);
-  --accent-foreground: hsl(222 47% 6%);
+  /* Accent - Purple brand */
+  --accent: hsl(243 66% 65%);
+  --accent-foreground: hsl(0 0% 100%);
 
   /* Destructive */
   --destructive: hsl(0 72% 51%);
   --destructive-foreground: hsl(210 40% 98%);
 
   /* Border & Input - Dark */
-  --border: hsl(217 33% 17%);
-  --input: hsl(217 33% 17%);
-  --ring: hsl(43 74% 52%);
+  --border: hsl(217 33% 20%);
+  --input: hsl(217 33% 20%);
+  --ring: hsl(243 66% 65%);
 }
 
 @theme inline {
@@ -173,5 +172,5 @@ html {
 }
 
 .dark ::selection {
-  background: hsl(43 74% 52% / 0.3);
+  background: hsl(243 66% 65% / 0.3);
 }
