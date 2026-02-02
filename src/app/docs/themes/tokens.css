@@ -1,0 +1,45 @@
+/**
+ * HostAI Docs Theme - Design Tokens
+ *
+ * Base tokens for typography, spacing, and transitions.
+ * Colors are defined in the preset file.
+ */
+
+:root {
+  /* ─── Typography ─────────────────────────────────────────────────────── */
+  --fwt-font-sans: system-ui, -apple-system, sans-serif;
+  --fwt-font-serif: ui-serif, Georgia, serif;
+  --fwt-font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  /* ─── Layout Dimensions ──────────────────────────────────────────────── */
+  --fd-sidebar-width: 280px;
+  --fd-toc-width: 220px;
+
+  /* ─── Spacing ────────────────────────────────────────────────────────── */
+  --fwt-sidebar-padding: 0.5rem 1rem 1rem;
+  --fwt-sidebar-item-padding: 0.5rem 0.75rem;
+  --fwt-sidebar-item-gap: 0.5rem;
+  --fwt-sidebar-group-padding: 0.5rem 0.75rem;
+  --fwt-toc-padding: 2.5rem 1.5rem 2.5rem 2rem;
+  --fwt-toc-link-padding: 0.375rem 0 0.375rem 0.75rem;
+
+  /* ─── Border Radius ──────────────────────────────────────────────────── */
+  --fwt-radius-sm: 4px;
+  --fwt-radius: 6px;
+  --fwt-radius-md: 8px;
+  --fwt-radius-lg: 12px;
+
+  /* ─── Transitions ────────────────────────────────────────────────────── */
+  --fwt-transition-fast: 150ms ease;
+  --fwt-transition-normal: 200ms ease;
+
+  /* ─── Font Sizes ─────────────────────────────────────────────────────── */
+  --fwt-text-xs: 0.6875rem;
+  --fwt-text-sm: 0.875rem;
+  --fwt-text-base: 1rem;
+  --fwt-text-lg: 1.125rem;
+  --fwt-text-xl: 1.25rem;
+  --fwt-text-2xl: 1.5rem;
+  --fwt-text-3xl: 1.875rem;
+  --fwt-text-4xl: 2.25rem;
+}
