@@ -24,9 +24,13 @@ body {
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-#nd-docs-layout {
-  background: var(--fwt-background);
+/* Reset layout - full width, no offset */
+[id="nd-docs-layout"] {
   padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  grid-template-columns: var(--fd-sidebar-width) 1fr var(--fd-toc-width) !important;
 }
 
 /* Fix sidebar footer cutoff */
