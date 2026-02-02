@@ -100,7 +100,7 @@ Features:
 - **Local dev**: SQLite (auto-created at `local.db`)
 - **Production**: Turso/LibSQL (set `TURSO_*` env vars)
 
-Migrations run automatically on startup.
+Migrations run automatically on startup. Visit `/admin/migrations` to check status or manually run pending migrations.
 
 ## Tech Stack
 
