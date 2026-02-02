@@ -18,6 +18,13 @@ export interface BigQueryConfig {
   location?: string;
   /** Create tables if they don't exist (default: true) */
   autoCreateTables?: boolean;
+  /**
+   * Optional credentials object. If not provided, will check:
+   * 1. GOOGLE_CREDENTIALS_JSON env var (JSON string)
+   * 2. GOOGLE_APPLICATION_CREDENTIALS env var (file path)
+   * 3. Default GCP credentials
+   */
+  credentials?: Record<string, unknown>;
 }
 
 export interface ExportResult {
@@ -39,7 +46,7 @@ export interface BatchExportResult {
  */
 export class BigQueryExporter {
   private bq: BigQuery;
-  private config: Required<BigQueryConfig>;
+  private config: Required<Omit<BigQueryConfig, "credentials">>;
   private dataset: Dataset | null = null;
   private tables: Map<TableName, Table> = new Map();
   private initialized = false;
@@ -53,9 +60,35 @@ export class BigQueryExporter {
       autoCreateTables: config.autoCreateTables ?? true,
     };
 
+    // Resolve credentials in priority order:
+    // 1. Explicit credentials passed in config
+    // 2. GOOGLE_CREDENTIALS_JSON env var (JSON string - for Vercel/Heroku)
+    // 3. GOOGLE_APPLICATION_CREDENTIALS env var (file path - handled by SDK)
+    // 4. Default GCP credentials (when running on GCP)
+    const credentials = config.credentials ?? this.resolveCredentialsFromEnv();
+
     this.bq = new BigQuery({
       projectId: this.config.projectId,
+      ...(credentials && { credentials }),
     });
+  }
+
+  /**
+   * Resolve credentials from GOOGLE_CREDENTIALS_JSON env var
+   */
+  private resolveCredentialsFromEnv(): Record<string, unknown> | undefined {
+    const jsonCredentials = process.env.GOOGLE_CREDENTIALS_JSON;
+    if (!jsonCredentials) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(jsonCredentials);
+    } catch (error) {
+      throw new Error(
+        `Failed to parse GOOGLE_CREDENTIALS_JSON: ${error instanceof Error ? error.message : "Invalid JSON"}`
+      );
+    }
   }
 
   /**
