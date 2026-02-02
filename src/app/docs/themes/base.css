@@ -1,0 +1,395 @@
+/**
+ * HostAI Docs Theme - Base Styles
+ *
+ * Structural overrides for Fumadocs components.
+ */
+
+/* ============================================
+   Global Base
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--fwt-font-sans);
+  background: var(--fwt-background);
+  color: var(--fwt-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#nd-docs-layout {
+  background: var(--fwt-background);
+}
+
+/* ============================================
+   Navbar / Header
+   ============================================ */
+
+nav {
+  background: color-mix(in srgb, var(--fwt-background) 90%, transparent) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--fwt-border) !important;
+}
+
+/* ============================================
+   Sidebar
+   ============================================ */
+
+#nd-sidebar {
+  background: var(--fwt-background) !important;
+  border-right: 1px solid var(--fwt-border) !important;
+  padding: 0 !important;
+  align-items: stretch !important;
+}
+
+#nd-sidebar > div {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+#nd-sidebar > div > div {
+  width: 100% !important;
+}
+
+#nd-sidebar div[class*="p-4"],
+#nd-sidebar div[class*="size-full"] {
+  padding: var(--fwt-sidebar-padding) !important;
+  width: 100% !important;
+}
+
+/* Sidebar links */
+#nd-sidebar a {
+  display: flex;
+  align-items: center;
+  gap: var(--fwt-sidebar-item-gap);
+  padding: var(--fwt-sidebar-item-padding) !important;
+  border-radius: var(--fwt-radius);
+  color: var(--fwt-muted);
+  text-decoration: none;
+  font-size: var(--fwt-text-sm);
+  transition: background var(--fwt-transition-fast), color var(--fwt-transition-fast);
+  margin: 0 !important;
+}
+
+#nd-sidebar a:hover {
+  background: var(--color-fd-accent);
+  color: var(--fwt-primary);
+}
+
+#nd-sidebar a[data-active="true"],
+#nd-sidebar a[aria-current="page"] {
+  background: var(--fwt-sidebar-active-bg) !important;
+  color: var(--fwt-sidebar-active) !important;
+  font-weight: 500;
+}
+
+/* Sidebar group titles */
+#nd-sidebar p,
+#nd-sidebar [data-separator],
+#nd-sidebar span[class*="text-fd-muted"] {
+  font-size: var(--fwt-text-xs) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fwt-muted) !important;
+  padding: var(--fwt-sidebar-group-padding) !important;
+  margin: 0 !important;
+}
+
+/* Sidebar buttons (folders) */
+#nd-sidebar button {
+  display: flex;
+  align-items: center;
+  gap: var(--fwt-sidebar-item-gap);
+  font-size: var(--fwt-text-sm);
+  color: var(--fwt-muted);
+  border-radius: var(--fwt-radius);
+  padding: var(--fwt-sidebar-item-padding) !important;
+  margin: 0 !important;
+  width: 100%;
+  text-align: left;
+}
+
+#nd-sidebar button:hover {
+  background: var(--color-fd-accent);
+  color: var(--fwt-primary);
+}
+
+#nd-sidebar ul,
+#nd-sidebar li {
+  list-style: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#nd-sidebar nav {
+  padding: 0 !important;
+}
+
+/* ============================================
+   Table of Contents
+   ============================================ */
+
+aside[class*="toc"],
+div[class*="toc"] {
+  font-size: 13px;
+  padding: var(--fwt-toc-padding) !important;
+}
+
+aside[class*="toc"] p:first-child,
+div[class*="toc"] p:first-child {
+  font-size: var(--fwt-text-xs) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fwt-foreground) !important;
+  margin-bottom: 1rem;
+  padding: 0 !important;
+}
+
+aside[class*="toc"] a,
+div[class*="toc"] a {
+  font-size: 0.8125rem;
+  color: var(--fwt-muted);
+  padding: var(--fwt-toc-link-padding) !important;
+  margin: 0 !important;
+  line-height: 1.4;
+  transition: color var(--fwt-transition-fast);
+  display: block;
+  border-left: 2px solid transparent;
+}
+
+aside[class*="toc"] a:hover,
+div[class*="toc"] a:hover {
+  color: var(--fwt-foreground);
+}
+
+aside[class*="toc"] a[data-active="true"],
+div[class*="toc"] a[data-active="true"] {
+  color: var(--fwt-primary) !important;
+  font-weight: 500;
+  border-left-color: var(--fwt-primary) !important;
+}
+
+/* ============================================
+   Content Typography
+   ============================================ */
+
+article,
+main > div > div {
+  max-width: 80ch;
+}
+
+h1 {
+  font-size: var(--fwt-text-4xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--fwt-foreground);
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: var(--fwt-text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--fwt-border);
+  color: var(--fwt-foreground);
+}
+
+h2:first-of-type {
+  margin-top: 2rem;
+  padding-top: 0;
+  border-top: none;
+}
+
+h3 {
+  font-size: var(--fwt-text-xl);
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--fwt-foreground);
+}
+
+h4 {
+  font-size: var(--fwt-text-base);
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+article > p:first-of-type,
+.prose > p:first-of-type {
+  font-size: var(--fwt-text-lg);
+  color: var(--fwt-muted);
+  line-height: 1.6;
+}
+
+article a:not([class]),
+.prose a:not([class]) {
+  color: var(--fwt-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+article a:not([class]):hover,
+.prose a:not([class]):hover {
+  text-decoration: underline;
+}
+
+ul, ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+li::marker {
+  color: var(--fwt-primary);
+}
+
+strong {
+  font-weight: 600;
+  color: var(--fwt-foreground);
+}
+
+/* ============================================
+   Code Blocks
+   ============================================ */
+
+pre {
+  background: var(--fwt-code-bg) !important;
+  border: 1px solid var(--fwt-code-border) !important;
+  border-radius: var(--fwt-radius-lg) !important;
+  padding: 1rem !important;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+code:not(pre code) {
+  font-family: var(--fwt-font-mono);
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: var(--fwt-radius-sm);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--fwt-foreground);
+}
+
+.dark code:not(pre code) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   Tables
+   ============================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 14px;
+  border-radius: var(--fwt-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--fwt-border);
+}
+
+th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fwt-muted);
+  background: rgba(0, 0, 0, 0.02);
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--fwt-border);
+}
+
+.dark th {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--fwt-border);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* ============================================
+   Blockquotes
+   ============================================ */
+
+blockquote {
+  border-left: 3px solid var(--fwt-primary);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: var(--fwt-muted);
+  font-style: italic;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--fwt-border);
+  margin: 2.5rem 0;
+}
+
+/* ============================================
+   Search
+   ============================================ */
+
+[data-search] {
+  border-radius: var(--fwt-radius-md);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 1280px) {
+  :root {
+    --fd-toc-width: 180px;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --fd-toc-width: 0px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --fd-sidebar-width: 280px;
+  }
+
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  pre {
+    border-radius: var(--fwt-radius-md) !important;
+    font-size: 12px;
+  }
+}

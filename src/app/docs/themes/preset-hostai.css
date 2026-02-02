@@ -1,0 +1,66 @@
+/**
+ * HostAI Color Preset
+ * Purple brand theme (#5753c6)
+ */
+
+:root {
+  /* Fumadocs variables */
+  --color-fd-background: #fafafa;
+  --color-fd-foreground: #18181b;
+  --color-fd-muted: rgba(0, 0, 0, 0.04);
+  --color-fd-muted-foreground: #71717a;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #18181b;
+  --color-fd-card: rgba(255, 255, 255, 0.8);
+  --color-fd-card-foreground: #18181b;
+  --color-fd-border: rgba(0, 0, 0, 0.1);
+  --color-fd-primary: #5753c6;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-secondary: rgba(0, 0, 0, 0.04);
+  --color-fd-secondary-foreground: #18181b;
+  --color-fd-accent: rgba(87, 83, 198, 0.1);
+  --color-fd-accent-foreground: #5753c6;
+  --color-fd-ring: #5753c6;
+
+  /* Theme tokens */
+  --fwt-background: #fafafa;
+  --fwt-foreground: #18181b;
+  --fwt-primary: #5753c6;
+  --fwt-muted: #71717a;
+  --fwt-border: rgba(0, 0, 0, 0.1);
+  --fwt-sidebar-active: #5753c6;
+  --fwt-sidebar-active-bg: rgba(87, 83, 198, 0.1);
+  --fwt-code-bg: rgba(0, 0, 0, 0.03);
+  --fwt-code-border: rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  /* Fumadocs variables */
+  --color-fd-background: #09090b;
+  --color-fd-foreground: #fafafa;
+  --color-fd-muted: rgba(255, 255, 255, 0.05);
+  --color-fd-muted-foreground: #a1a1aa;
+  --color-fd-popover: #18181b;
+  --color-fd-popover-foreground: #fafafa;
+  --color-fd-card: rgba(255, 255, 255, 0.03);
+  --color-fd-card-foreground: #fafafa;
+  --color-fd-border: rgba(255, 255, 255, 0.1);
+  --color-fd-primary: #818cf8;
+  --color-fd-primary-foreground: #09090b;
+  --color-fd-secondary: rgba(255, 255, 255, 0.05);
+  --color-fd-secondary-foreground: #fafafa;
+  --color-fd-accent: rgba(129, 140, 248, 0.15);
+  --color-fd-accent-foreground: #818cf8;
+  --color-fd-ring: #818cf8;
+
+  /* Theme tokens */
+  --fwt-background: #09090b;
+  --fwt-foreground: #fafafa;
+  --fwt-primary: #818cf8;
+  --fwt-muted: #a1a1aa;
+  --fwt-border: rgba(255, 255, 255, 0.1);
+  --fwt-sidebar-active: #818cf8;
+  --fwt-sidebar-active-bg: rgba(129, 140, 248, 0.15);
+  --fwt-code-bg: rgba(255, 255, 255, 0.03);
+  --fwt-code-border: rgba(255, 255, 255, 0.08);
+}
