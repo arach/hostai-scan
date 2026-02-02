@@ -24,13 +24,16 @@ body {
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Reset layout - full width, no offset */
+/* Reset layout - full width, top aligned */
 [id="nd-docs-layout"] {
   padding: 0 !important;
   margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   grid-template-columns: var(--fd-sidebar-width) 1fr var(--fd-toc-width) !important;
+  top: 0 !important;
+  position: relative !important;
+  --fd-banner-height: 0px !important;
 }
 
 /* Fix sidebar footer cutoff */
@@ -132,13 +135,13 @@ nav {
    TABLE OF CONTENTS
    ═══════════════════════════════════════════════════════════════════════════ */
 
-aside[class*="toc"],
-div[class*="toc"] {
+aside.fd-toc,
+[data-toc] {
   padding: var(--fwt-toc-padding) !important;
 }
 
-aside[class*="toc"] p:first-child,
-div[class*="toc"] p:first-child {
+aside.fd-toc p:first-child,
+[data-toc] p:first-child {
   font-size: var(--fwt-text-xs) !important;
   font-weight: var(--fwt-weight-semibold) !important;
   text-transform: uppercase;
@@ -147,8 +150,8 @@ div[class*="toc"] p:first-child {
   margin-bottom: var(--fwt-space-4);
 }
 
-aside[class*="toc"] a,
-div[class*="toc"] a {
+aside.fd-toc a,
+[data-toc] a {
   display: block;
   font-size: var(--fwt-text-sm);
   color: var(--fwt-toc-text);
@@ -159,13 +162,13 @@ div[class*="toc"] a {
   transition: all var(--fwt-transition-fast);
 }
 
-aside[class*="toc"] a:hover,
-div[class*="toc"] a:hover {
+aside.fd-toc a:hover,
+[data-toc] a:hover {
   color: var(--fwt-toc-text-hover);
 }
 
-aside[class*="toc"] a[data-active="true"],
-div[class*="toc"] a[data-active="true"] {
+aside.fd-toc a[data-active="true"],
+[data-toc] a[data-active="true"] {
   color: var(--fwt-toc-active) !important;
   font-weight: var(--fwt-weight-medium);
   border-left-color: var(--fwt-toc-active) !important;
@@ -276,25 +279,42 @@ strong {
    CODE BLOCKS
    ═══════════════════════════════════════════════════════════════════════════ */
 
-pre {
-  font-family: var(--fwt-font-mono);
-  font-size: 13px;
-  line-height: var(--fwt-leading-relaxed);
+/* Code blocks - strip outer wrapper, style only the pre */
+figure,
+figure[data-rehype-pretty-code-figure],
+[data-rehype-pretty-code-figure],
+div:has(> pre) {
+  all: unset !important;
+  display: block !important;
+  margin: var(--fwt-space-4) 0 !important;
+  position: relative !important;
+}
+
+pre,
+pre.shiki {
+  font-family: var(--fwt-font-mono) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
   background: var(--fwt-code-bg) !important;
   border: 1px solid var(--fwt-code-border) !important;
   border-radius: var(--fwt-radius-lg) !important;
   padding: var(--fwt-space-4) !important;
   overflow-x: auto;
+  margin: 0 !important;
 }
 
-pre code {
+pre code,
+pre.shiki code {
   color: var(--fwt-code-text) !important;
-  font-family: var(--fwt-font-mono);
-  font-size: inherit;
+  font-family: var(--fwt-font-mono) !important;
+  font-size: inherit !important;
   background: transparent !important;
   padding: 0 !important;
+  border: none !important;
+  display: block;
 }
 
+/* Inline code */
 code:not(pre code) {
   font-family: var(--fwt-font-mono);
   font-size: 0.875em;
