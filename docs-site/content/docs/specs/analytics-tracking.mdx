@@ -1,0 +1,200 @@
+---
+title: Analytics & Tracking Spec
+description: Implementation spec for analytics detection rules
+---
+
+# Analytics & Tracking — Implementation Spec
+
+## Overview
+
+Detect presence of analytics and advertising pixels to assess measurement capability. Sites without tracking can't measure conversion effectiveness.
+
+## Category
+
+| Property | Value |
+|----------|-------|
+| Category ID | `analytics` |
+| Weight | 8% |
+| Rules | 3 |
+
+## Rules
+
+### `analytics.no_ga4`
+
+**Google Analytics 4 not detected**
+
+| Property | Value |
+|----------|-------|
+| Severity | Major |
+| Impact | 0.55 |
+| Effort | Low |
+
+**Detection Logic:**
+
+```typescript
+function detectGA4(html: string, scripts: string[]): boolean {
+  // Check for gtag.js with G- measurement ID
+  const gtagPattern = /gtag\(['"]config['"],\s*['"]G-[A-Z0-9]+['"]\)/;
+
+  // Check for GA4 script src
+  const ga4ScriptPattern = /googletagmanager\.com\/gtag\/js\?id=G-/;
+
+  // Check dataLayer for GA4 config
+  const dataLayerPattern = /gtag\(['"]config['"],\s*['"]G-/;
+
+  return (
+    gtagPattern.test(html) ||
+    scripts.some(src => ga4ScriptPattern.test(src)) ||
+    dataLayerPattern.test(html)
+  );
+}
+```
+
+**Evidence:**
+- `"No GA4 measurement ID (G-XXXXXXX) detected"`
+- `"No gtag.js script found"`
+
+**Note:** Also check for legacy UA- IDs and flag as separate finding if only UA present (UA sunset).
+
+---
+
+### `analytics.no_meta_pixel`
+
+**Meta (Facebook) Pixel not detected**
+
+| Property | Value |
+|----------|-------|
+| Severity | Minor |
+| Impact | 0.40 |
+| Effort | Low |
+
+**Detection Logic:**
+
+```typescript
+function detectMetaPixel(html: string, scripts: string[]): boolean {
+  // Check for fbq function calls
+  const fbqPattern = /fbq\(['"]init['"],\s*['"]\d+['"]\)/;
+
+  // Check for Meta Pixel script
+  const pixelScriptPattern = /connect\.facebook\.net\/.*\/fbevents\.js/;
+
+  // Check for pixel image fallback
+  const pixelImgPattern = /facebook\.com\/tr\?id=\d+/;
+
+  return (
+    fbqPattern.test(html) ||
+    scripts.some(src => pixelScriptPattern.test(src)) ||
+    pixelImgPattern.test(html)
+  );
+}
+```
+
+**Evidence:**
+- `"No Meta Pixel ID detected"`
+- `"No fbevents.js script found"`
+
+---
+
+### `analytics.no_tiktok_pixel`
+
+**TikTok Pixel not detected**
+
+| Property | Value |
+|----------|-------|
+| Severity | Trivial |
+| Impact | 0.20 |
+| Effort | Low |
+
+**Detection Logic:**
+
+```typescript
+function detectTikTokPixel(html: string, scripts: string[]): boolean {
+  // Check for ttq function calls
+  const ttqPattern = /ttq\.load\(['"][A-Z0-9]+['"]\)/;
+
+  // Check for TikTok pixel script
+  const tiktokScriptPattern = /analytics\.tiktok\.com\/i18n\/pixel\/events\.js/;
+
+  return (
+    ttqPattern.test(html) ||
+    scripts.some(src => tiktokScriptPattern.test(src))
+  );
+}
+```
+
+**Evidence:**
+- `"No TikTok Pixel ID detected"`
+
+**Note:** Lower severity — only relevant if targeting younger demographics.
+
+---
+
+## Data Collection
+
+### Required Signals
+
+```typescript
+interface AnalyticsSignals {
+  ga4: {
+    detected: boolean;
+    measurementId?: string;  // G-XXXXXXX
+  };
+  metaPixel: {
+    detected: boolean;
+    pixelId?: string;
+  };
+  tiktokPixel: {
+    detected: boolean;
+    pixelId?: string;
+  };
+  // Future expansion
+  googleAds?: { detected: boolean; conversionId?: string };
+  hotjar?: { detected: boolean };
+  clarity?: { detected: boolean };
+}
+```
+
+### Collection Method
+
+1. Fetch page HTML
+2. Parse all `<script>` tags (inline + src)
+3. Check for pixel patterns in:
+   - Inline script content
+   - Script src URLs
+   - `<noscript>` fallback images
+   - `dataLayer` pushes
+
+### Pages to Check
+
+- Home page (required)
+- Property page (if detected)
+- Booking/checkout page (if detected)
+
+Pixels should be present on all pages. Finding on any page = detected.
+
+---
+
+## Confidence Adjustment
+
+| Scenario | Confidence |
+|----------|------------|
+| Pattern found in inline script | 0.95 |
+| Pattern found in external script src | 0.90 |
+| Pattern found in noscript fallback only | 0.75 |
+| GTM detected but no specific pixel confirmed | 0.60 |
+
+If Google Tag Manager is detected, note that pixels may be loaded dynamically. Lower confidence but still flag if no direct evidence.
+
+---
+
+## Future Expansion
+
+Consider adding:
+
+| Rule | Description |
+|------|-------------|
+| `analytics.no_google_ads` | Google Ads conversion tracking missing |
+| `analytics.no_hotjar` | No session recording tool |
+| `analytics.no_clarity` | No Microsoft Clarity |
+| `analytics.ua_only` | Only legacy Universal Analytics (deprecated) |
+| `analytics.gtm_misconfigured` | GTM present but no tags firing |

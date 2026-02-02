@@ -1,0 +1,112 @@
+---
+title: Content Rules
+description: Rules that evaluate photos, descriptions, and messaging quality
+---
+
+# Content Rules
+
+Content rules account for 15% of the overall score. They evaluate whether the site's photos, descriptions, and messaging effectively sell the property.
+
+## Why Content Matters
+
+STR guests can't physically inspect a property before booking. They rely entirely on visual and written content to make decisions.
+
+## Rules
+
+### low_image_count
+
+**Property has fewer than 10 images**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Major |
+| Impact | 0.60 |
+| Effort | Medium |
+
+Guests expect comprehensive photo coverage.
+
+**Fix:** Add photos covering all rooms, outdoor spaces, and amenities.
+
+---
+
+### small_hero_image
+
+**Hero image resolution too low**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.35 |
+| Effort | Low |
+
+The hero image is the first visual impression. Low-resolution images look unprofessional.
+
+**Threshold:** Hero image should be at least 1200px wide.
+
+**Fix:** Replace with high-resolution photography.
+
+---
+
+### no_video
+
+**No video content for property**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Trivial |
+| Impact | 0.20 |
+| Effort | Medium |
+
+Video walkthroughs are increasingly expected for premium properties.
+
+**Fix:** Add a property walkthrough video.
+
+---
+
+### thin_description
+
+**Property description too short**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.40 |
+| Effort | Low |
+
+Brief descriptions fail to communicate what makes the property special.
+
+**Threshold:** Description should be at least 100 words.
+
+**Fix:** Expand to cover unique features, layout, amenities, and neighborhood.
+
+---
+
+### no_direct_booking_benefits
+
+**No "why book direct" messaging**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.45 |
+| Effort | Low |
+
+If guests find the same property on Airbnb, why should they book directly?
+
+**Fix:** Add messaging about direct booking benefits: better rates, no service fees.
+
+---
+
+### missing_local_content
+
+**No local area information**
+
+| Attribute | Value |
+|-----------|-------|
+| Severity | Minor |
+| Impact | 0.30 |
+| Effort | Medium |
+
+Guests aren't just booking a room—they're planning an experience.
+
+**Fix:** Add local content: things to do, restaurants, getting there.

@@ -1,0 +1,110 @@
+---
+title: Extending the Rules System
+description: How to add new rules or modify existing ones
+---
+
+# Extending the Rules System
+
+This guide explains how to add new rules or modify existing ones.
+
+## Adding a New Rule
+
+### Step 1: Create the Rule File
+
+```
+src/rules/{category}/{rule-name}.ts
+```
+
+### Step 2: Implement the Rule
+
+```typescript
+import type { NormalizedAudit, Finding } from '../../types';
+
+export const RULE_ID = 'category.my_new_rule';
+
+export function evaluate(audit: NormalizedAudit): Finding | null {
+  // 1. Guard: Return null if required data is missing
+  if (!audit.crawl?.pages?.home) {
+    return null;
+  }
+
+  // 2. Detect: Check for the issue
+  const hasIssue = /* detection logic */;
+  if (!hasIssue) return null;
+
+  // 3. Build evidence (REQUIRED)
+  const evidence = [
+    `Metric: ${value} (threshold: ${threshold})`,
+  ];
+
+  // 4. Return the finding
+  return {
+    id: RULE_ID,
+    title: 'Clear, descriptive title',
+    category: 'conversion',
+    severity: 'major',
+    impact: 0.65,
+    confidence: 0.85,
+    penalty: 18 * 0.65 * 0.85,
+    evidence,
+    fix: 'Actionable recommendation.',
+    effort: 'medium',
+    tags: [],
+  };
+}
+```
+
+### Step 3: Register and Test
+
+1. Add to category index file
+2. Write unit tests covering pass/fail/missing-data cases
+
+## Choosing Severity
+
+| Severity | Use When |
+|----------|----------|
+| **Blocker** | Fundamentally prevents conversions |
+| **Major** | Significant impact on user experience |
+| **Minor** | Notable but moderate impact |
+| **Trivial** | Nice-to-have improvement |
+
+## Setting Impact
+
+- **0.9-1.0** — Critical to booking
+- **0.7-0.9** — Significant effect
+- **0.5-0.7** — Moderate influence
+- **0.3-0.5** — Minor effect
+- **0.1-0.3** — Minimal impact
+
+## Writing Evidence
+
+**Good:**
+```typescript
+evidence: [
+  'Mobile LCP: 4.2s (threshold: 2.5s)',
+  'Largest element: hero-image.jpg (1.8MB)',
+]
+```
+
+**Bad:**
+```typescript
+evidence: [
+  'Page is slow',
+  'Consider optimizing',
+]
+```
+
+## Rule Design Principles
+
+1. **Determinism** — Same input → same output
+2. **Pure Functions** — No side effects
+3. **Graceful Degradation** — Handle missing data
+4. **Single Responsibility** — One issue per rule
+
+## Testing Checklist
+
+- [ ] Returns null when no issue
+- [ ] Returns correct finding when issue exists
+- [ ] Handles missing data gracefully
+- [ ] Evidence is non-empty
+- [ ] Penalty calculation is correct

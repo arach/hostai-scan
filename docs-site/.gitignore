@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Next.js build
+.next/
+out/
+
+# Generated files
+.source/
+
+# Misc
+.DS_Store
+*.pem

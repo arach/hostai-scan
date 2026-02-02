@@ -1,0 +1,51 @@
+---
+title: GetHost.AI Docs
+description: Website diagnostic tool for short-term rental properties
+---
+
+# GetHost.AI Documentation
+
+Audit tool for STR websites. Produces evidence-based reports identifying conversion blockers, performance issues, and trust gaps.
+
+## Quick Reference
+
+| Doc | Purpose |
+|-----|---------|
+| [Rules Reference](/docs/rules-reference) | All 30 rules in table format |
+| [Agent Reference](/docs/agents) | Technical spec for AI agents |
+| [Scoring](/docs/scoring) | How scores are calculated |
+| [Extending](/docs/scoring/extending) | How to add new rules |
+
+## Scoring Overview
+
+**Formula:** `penalty = severityBase × impact × confidence`
+
+| Severity | Points |
+|----------|--------|
+| Blocker | 35 |
+| Major | 18 |
+| Minor | 8 |
+| Trivial | 4 |
+
+**Category Weights:**
+
+| Category | Weight |
+|----------|--------|
+| Conversion | 32% |
+| Performance | 18% |
+| Trust | 18% |
+| Content | 14% |
+| Analytics | 8% |
+| SEO | 7% |
+| Security | 3% |
+
+**Safety Clamps:**
+- Conversion blocker → max score 69
+- No HTTPS → max score 59
+
+## Key Principles
+
+1. **Deterministic** — Same input = same output, no randomness
+2. **Evidence-based** — Every finding cites specific metrics
+3. **Pure functions** — Rules are `(audit) => Finding | null`
+4. **Partial audit support** — Module failures don't crash the audit

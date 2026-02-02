@@ -7,6 +7,7 @@ import { ReportVariantC } from "@/components/report/variants/report-variant-c";
 import { ExpiredReport } from "@/components/report/expired-report";
 import { GATracker } from "@/components/report/ga-tracker";
 import { AnalyticsTracker } from "@/components/report/analytics-tracker";
+import { EmailCaptureOverlay } from "@/components/report/email-capture";
 import type { AuditResult } from "@/types/audit";
 
 interface PageProps {
@@ -45,6 +46,7 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
         <>
           <GATracker auditId={auditId} />
           <AnalyticsTracker auditId={auditId} />
+          <EmailCaptureOverlay auditId={auditId} triggerPercent={80} />
           <ReportVariantB result={result} auditId={auditId} />
         </>
       );
@@ -53,6 +55,7 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
         <>
           <GATracker auditId={auditId} />
           <AnalyticsTracker auditId={auditId} />
+          <EmailCaptureOverlay auditId={auditId} triggerPercent={80} />
           <ReportVariantC result={result} auditId={auditId} />
         </>
       );
@@ -62,6 +65,7 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
         <>
           <GATracker auditId={auditId} />
           <AnalyticsTracker auditId={auditId} />
+          <EmailCaptureOverlay auditId={auditId} triggerPercent={80} />
           <PublicReportView result={result} auditId={auditId} />
         </>
       );

@@ -15,13 +15,16 @@ import {
   Link2,
   ChevronDown,
   Upload,
+  Users,
+  Table,
+  LayoutList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemePicker } from "@/components/theme-picker";
-import { LinkBuilder, BulkImportModal } from "@/components/admin";
+import { LinkBuilder, BulkImportModal, AuditTable } from "@/components/admin";
 
 interface AuditSummary {
   id: string;
@@ -132,6 +135,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [expandedLinkBuilder, setExpandedLinkBuilder] = useState<string | null>(null);
   const [balances, setBalances] = useState<ApiBalances | null>(null);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "table">("list");
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -309,6 +313,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </div>
           <div className="flex items-center gap-2">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.href = "/admin/leads"}
+            >
+              <Users className="size-4" />
+              Leads
+            </Button>
+            <Button
               variant="default"
               size="sm"
               onClick={() => setShowBulkImportModal(true)}
@@ -316,9 +328,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <Upload className="size-4" />
               Bulk Import
             </Button>
+            <div className="flex items-center border border-border rounded-md">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                className="rounded-r-none"
+                onClick={() => setViewMode("list")}
+              >
+                <LayoutList className="size-4" />
+              </Button>
+              <Button
+                variant={viewMode === "table" ? "secondary" : "ghost"}
+                size="sm"
+                className="rounded-l-none"
+                onClick={() => setViewMode("table")}
+              >
+                <Table className="size-4" />
+              </Button>
+            </div>
             <Button variant="outline" size="sm" onClick={fetchAudits}>
               <RefreshCw className="size-4" />
-              Refresh
             </Button>
             <ThemePicker />
             <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -472,133 +501,137 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </Card>
         )}
 
-        {/* Audits List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Generated Audits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="size-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : audits.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No audits yet. Generate one above.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {audits.map((audit) => (
-                  <div
-                    key={audit.id}
-                    className="rounded-lg border border-border overflow-hidden"
-                  >
-                    <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                      {/* Score */}
-                      <div className="w-16 text-center">
-                        {audit.overallScore !== undefined ? (
-                          <Badge
-                            variant={getScoreColor(audit.overallScore) as "success" | "warning" | "error" | "secondary"}
-                            className="text-lg px-3 py-1"
-                          >
-                            {audit.overallScore}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">--</Badge>
-                        )}
-                      </div>
+        {/* Audits View - List or Table */}
+        {viewMode === "table" ? (
+          <AuditTable onRerunAudit={startAudit} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Generated Audits</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : audits.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No audits yet. Generate one above.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {audits.map((audit) => (
+                    <div
+                      key={audit.id}
+                      className="rounded-lg border border-border overflow-hidden"
+                    >
+                      <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                        {/* Score */}
+                        <div className="w-16 text-center">
+                          {audit.overallScore !== undefined ? (
+                            <Badge
+                              variant={getScoreColor(audit.overallScore) as "success" | "warning" | "error" | "secondary"}
+                              className="text-lg px-3 py-1"
+                            >
+                              {audit.overallScore}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">--</Badge>
+                          )}
+                        </div>
 
-                      {/* Domain & Date */}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{audit.domain}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Clock className="size-3" />
-                          {formatDate(audit.createdAt)}
+                        {/* Domain & Date */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{audit.domain}</div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Clock className="size-3" />
+                            {formatDate(audit.createdAt)}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startAudit(audit.domain)}
+                            title="Re-run audit"
+                          >
+                            <RefreshCw className="size-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyUrl(audit.id)}
+                          >
+                            {copiedId === audit.id ? (
+                              <>
+                                <Check className="size-4" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="size-4" />
+                                Copy URL
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant={expandedLinkBuilder === audit.id ? "secondary" : "ghost"}
+                            size="sm"
+                            onClick={() =>
+                              setExpandedLinkBuilder(
+                                expandedLinkBuilder === audit.id ? null : audit.id
+                              )
+                            }
+                            title="UTM Link Builder"
+                          >
+                            <Link2 className="size-4" />
+                            <ChevronDown
+                              className={`size-3 transition-transform ${
+                                expandedLinkBuilder === audit.id ? "rotate-180" : ""
+                              }`}
+                            />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              window.location.href = `/admin/${audit.id}`
+                            }
+                            title="View raw data"
+                          >
+                            Data
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              window.open(`/report/${audit.id}`, "_blank")
+                            }
+                          >
+                            <ExternalLink className="size-4" />
+                          </Button>
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startAudit(audit.domain)}
-                          title="Re-run audit"
-                        >
-                          <RefreshCw className="size-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyUrl(audit.id)}
-                        >
-                          {copiedId === audit.id ? (
-                            <>
-                              <Check className="size-4" />
-                              Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="size-4" />
-                              Copy URL
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant={expandedLinkBuilder === audit.id ? "secondary" : "ghost"}
-                          size="sm"
-                          onClick={() =>
-                            setExpandedLinkBuilder(
-                              expandedLinkBuilder === audit.id ? null : audit.id
-                            )
-                          }
-                          title="UTM Link Builder"
-                        >
-                          <Link2 className="size-4" />
-                          <ChevronDown
-                            className={`size-3 transition-transform ${
-                              expandedLinkBuilder === audit.id ? "rotate-180" : ""
-                            }`}
+                      {/* Expanded Link Builder */}
+                      {expandedLinkBuilder === audit.id && (
+                        <div className="border-t border-border bg-muted/30 p-4">
+                          <LinkBuilder
+                            baseUrl={`${baseUrl}/report/${audit.id}`}
+                            auditId={audit.id}
+                            domain={audit.domain}
                           />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            window.location.href = `/admin/${audit.id}`
-                          }
-                          title="View raw data"
-                        >
-                          Data
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            window.open(`/report/${audit.id}`, "_blank")
-                          }
-                        >
-                          <ExternalLink className="size-4" />
-                        </Button>
-                      </div>
+                        </div>
+                      )}
                     </div>
-
-                    {/* Expanded Link Builder */}
-                    {expandedLinkBuilder === audit.id && (
-                      <div className="border-t border-border bg-muted/30 p-4">
-                        <LinkBuilder
-                          baseUrl={`${baseUrl}/report/${audit.id}`}
-                          auditId={audit.id}
-                          domain={audit.domain}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
         <div className="mt-8 grid sm:grid-cols-3 gap-4">
