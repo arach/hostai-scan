@@ -127,29 +127,29 @@ export const THEME_PRESETS: ThemeConfig[] = [
       chart5: "280 65% 60%",
     },
     dark: {
-      background: "222 47% 6%",
-      foreground: "210 40% 96%",
-      card: "222 47% 9%",
-      cardForeground: "210 40% 96%",
-      muted: "217 33% 15%",
-      mutedForeground: "215 20% 55%",
-      primary: "43 74% 52%",
-      primaryForeground: "222 47% 6%",
-      secondary: "217 33% 17%",
-      secondaryForeground: "210 40% 96%",
-      accent: "43 74% 52%",
-      accentForeground: "222 47% 6%",
-      border: "217 33% 17%",
-      input: "217 33% 17%",
-      ring: "43 74% 52%",
-      success: "142 70% 45%",
-      warning: "38 92% 50%",
-      error: "0 72% 51%",
-      chart1: "43 74% 52%",
-      chart2: "142 70% 45%",
-      chart3: "0 72% 51%",
-      chart4: "217 91% 60%",
-      chart5: "280 65% 60%",
+      background: "222 47% 8%",
+      foreground: "210 40% 98%",
+      card: "222 47% 11%",
+      cardForeground: "210 40% 98%",
+      muted: "217 33% 17%",
+      mutedForeground: "215 20% 70%",
+      primary: "243 66% 65%",
+      primaryForeground: "0 0% 100%",
+      secondary: "217 33% 20%",
+      secondaryForeground: "210 40% 98%",
+      accent: "243 66% 65%",
+      accentForeground: "0 0% 100%",
+      border: "217 33% 22%",
+      input: "217 33% 22%",
+      ring: "243 66% 65%",
+      success: "142 70% 50%",
+      warning: "38 92% 55%",
+      error: "0 72% 55%",
+      chart1: "243 66% 65%",
+      chart2: "142 70% 50%",
+      chart3: "0 72% 55%",
+      chart4: "217 91% 65%",
+      chart5: "280 65% 65%",
     },
   },
 
@@ -479,6 +479,21 @@ export function applyTheme(theme: ThemeConfig, mode: "light" | "dark") {
   root.style.setProperty("--chart-3", `hsl(${colors.chart3})`);
   root.style.setProperty("--chart-4", `hsl(${colors.chart4})`);
   root.style.setProperty("--chart-5", `hsl(${colors.chart5})`);
+
+  // Sync fumadocs theme variables
+  root.style.setProperty("--color-fd-background", `hsl(${colors.background})`);
+  root.style.setProperty("--color-fd-foreground", `hsl(${colors.foreground})`);
+  root.style.setProperty("--color-fd-muted", `hsl(${colors.muted})`);
+  root.style.setProperty("--color-fd-muted-foreground", `hsl(${colors.mutedForeground})`);
+  root.style.setProperty("--color-fd-border", `hsl(${colors.border})`);
+  root.style.setProperty("--color-fd-primary", `hsl(${colors.primary})`);
+  root.style.setProperty("--color-fd-primary-foreground", `hsl(${colors.primaryForeground})`);
+  root.style.setProperty("--color-fd-secondary", `hsl(${colors.secondary})`);
+  root.style.setProperty("--color-fd-secondary-foreground", `hsl(${colors.secondaryForeground})`);
+  root.style.setProperty("--color-fd-accent", `hsl(${colors.accent})`);
+  root.style.setProperty("--color-fd-accent-foreground", `hsl(${colors.accentForeground})`);
+  root.style.setProperty("--color-fd-card", `hsl(${colors.card})`);
+  root.style.setProperty("--color-fd-card-foreground", `hsl(${colors.cardForeground})`);
 
   // Apply dark mode class
   if (mode === "dark") {
