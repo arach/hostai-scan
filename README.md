@@ -94,6 +94,8 @@ Features:
 - Bulk import via CSV
 - Lead tracking and scoring
 - Analytics overview
+- Database migrations dashboard (`/admin/migrations`)
+- Plans documentation viewer (`/admin/plans`)
 
 ## Database
 
