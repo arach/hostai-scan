@@ -10,12 +10,18 @@ import {
   Clock,
   Loader2,
   Wallet,
+  Lock,
+  LogOut,
+  Link2,
+  ChevronDown,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemePicker } from "@/components/theme-picker";
+import { LinkBuilder, BulkImportModal } from "@/components/admin";
 
 interface AuditSummary {
   id: string;
@@ -38,7 +44,84 @@ interface ApiBalances {
   fetchedAt: string;
 }
 
-export default function AdminPage() {
+// Login form component
+function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        onSuccess();
+      } else {
+        setError(data.error || "Invalid password");
+      }
+    } catch {
+      setError("Failed to authenticate");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Lock className="size-6 text-primary" />
+          </div>
+          <CardTitle className="text-xl">Admin Access</CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            Enter the admin password to continue
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || !password}
+            >
+              {isLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main admin dashboard
+function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
   const [newDomain, setNewDomain] = useState("");
@@ -46,7 +129,9 @@ export default function AdminPage() {
   const [showBulk, setShowBulk] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [expandedLinkBuilder, setExpandedLinkBuilder] = useState<string | null>(null);
   const [balances, setBalances] = useState<ApiBalances | null>(null);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -202,6 +287,17 @@ export default function AdminPage() {
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+      onLogout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still trigger logout on client side
+      onLogout();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -212,11 +308,22 @@ export default function AdminPage() {
             <Badge variant="outline">{audits.length} audits</Badge>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setShowBulkImportModal(true)}
+            >
+              <Upload className="size-4" />
+              Bulk Import
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchAudits}>
               <RefreshCw className="size-4" />
               Refresh
             </Button>
             <ThemePicker />
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="size-4" />
+            </Button>
           </div>
         </div>
       </header>
@@ -233,7 +340,7 @@ export default function AdminPage() {
                   {balances.semrush.units.toLocaleString()} units
                 </span>
               ) : (
-                <span className="text-muted-foreground">—</span>
+                <span className="text-muted-foreground">-</span>
               )}
             </div>
             <div className="h-4 w-px bg-border" />
@@ -244,7 +351,7 @@ export default function AdminPage() {
                   ${balances.dataForSEO.balance.toFixed(2)}
                 </span>
               ) : (
-                <span className="text-muted-foreground">—</span>
+                <span className="text-muted-foreground">-</span>
               )}
               {balances?.dataForSEO?.spent != null && (
                 <span className="text-xs text-muted-foreground">
@@ -384,78 +491,108 @@ export default function AdminPage() {
                 {audits.map((audit) => (
                   <div
                     key={audit.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    className="rounded-lg border border-border overflow-hidden"
                   >
-                    {/* Score */}
-                    <div className="w-16 text-center">
-                      {audit.overallScore !== undefined ? (
-                        <Badge
-                          variant={getScoreColor(audit.overallScore) as "success" | "warning" | "error" | "secondary"}
-                          className="text-lg px-3 py-1"
-                        >
-                          {audit.overallScore}
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">--</Badge>
-                      )}
-                    </div>
+                    <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                      {/* Score */}
+                      <div className="w-16 text-center">
+                        {audit.overallScore !== undefined ? (
+                          <Badge
+                            variant={getScoreColor(audit.overallScore) as "success" | "warning" | "error" | "secondary"}
+                            className="text-lg px-3 py-1"
+                          >
+                            {audit.overallScore}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">--</Badge>
+                        )}
+                      </div>
 
-                    {/* Domain & Date */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{audit.domain}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Clock className="size-3" />
-                        {formatDate(audit.createdAt)}
+                      {/* Domain & Date */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{audit.domain}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {formatDate(audit.createdAt)}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startAudit(audit.domain)}
+                          title="Re-run audit"
+                        >
+                          <RefreshCw className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyUrl(audit.id)}
+                        >
+                          {copiedId === audit.id ? (
+                            <>
+                              <Check className="size-4" />
+                              Copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-4" />
+                              Copy URL
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant={expandedLinkBuilder === audit.id ? "secondary" : "ghost"}
+                          size="sm"
+                          onClick={() =>
+                            setExpandedLinkBuilder(
+                              expandedLinkBuilder === audit.id ? null : audit.id
+                            )
+                          }
+                          title="UTM Link Builder"
+                        >
+                          <Link2 className="size-4" />
+                          <ChevronDown
+                            className={`size-3 transition-transform ${
+                              expandedLinkBuilder === audit.id ? "rotate-180" : ""
+                            }`}
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            window.location.href = `/admin/${audit.id}`
+                          }
+                          title="View raw data"
+                        >
+                          Data
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            window.open(`/report/${audit.id}`, "_blank")
+                          }
+                        >
+                          <ExternalLink className="size-4" />
+                        </Button>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => startAudit(audit.domain)}
-                        title="Re-run audit"
-                      >
-                        <RefreshCw className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyUrl(audit.id)}
-                      >
-                        {copiedId === audit.id ? (
-                          <>
-                            <Check className="size-4" />
-                            Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="size-4" />
-                            Copy URL
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          window.location.href = `/admin/${audit.id}`
-                        }
-                        title="View raw data"
-                      >
-                        Data
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          window.open(`/report/${audit.id}`, "_blank")
-                        }
-                      >
-                        <ExternalLink className="size-4" />
-                      </Button>
-                    </div>
+                    {/* Expanded Link Builder */}
+                    {expandedLinkBuilder === audit.id && (
+                      <div className="border-t border-border bg-muted/30 p-4">
+                        <LinkBuilder
+                          baseUrl={`${baseUrl}/report/${audit.id}`}
+                          auditId={audit.id}
+                          domain={audit.domain}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -488,6 +625,57 @@ export default function AdminPage() {
           </Card>
         </div>
       </div>
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={showBulkImportModal}
+        onClose={() => setShowBulkImportModal(false)}
+        onBatchStarted={() => {
+          // Refresh audits after batch starts
+          setTimeout(fetchAudits, 2000);
+        }}
+      />
     </div>
   );
+}
+
+// Main component with auth state management
+export default function AdminPage() {
+  const [authState, setAuthState] = useState<"loading" | "unauthenticated" | "authenticated">("loading");
+
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Try to fetch audits - if it succeeds, we're authenticated
+        // This also handles the case where auth is disabled
+        const res = await fetch("/api/admin/check");
+        if (res.ok) {
+          const data = await res.json();
+          setAuthState(data.authenticated ? "authenticated" : "unauthenticated");
+        } else {
+          setAuthState("unauthenticated");
+        }
+      } catch {
+        // If check endpoint doesn't exist, assume auth is disabled
+        setAuthState("authenticated");
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (authState === "loading") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (authState === "unauthenticated") {
+    return <AdminLogin onSuccess={() => setAuthState("authenticated")} />;
+  }
+
+  return <AdminDashboard onLogout={() => setAuthState("unauthenticated")} />;
 }
