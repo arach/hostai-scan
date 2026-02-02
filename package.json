@@ -1,0 +1,38 @@
+{
+  "name": "@gethostai/audit-core",
+  "version": "0.1.0",
+  "description": "Website diagnostic audit tool for short-term rental properties",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@browserbasehq/sdk": "^2.0.0",
+    "@browserbasehq/stagehand": "^3.0.8",
+    "@google-cloud/bigquery": "^7.9.4",
+    "ai": "^6.0.64",
+    "dotenv": "^16.3.1",
+    "playwright": "^1.40.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.55.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
