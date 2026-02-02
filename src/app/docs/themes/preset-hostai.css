@@ -38,8 +38,8 @@
   /* Fumadocs variables */
   --color-fd-background: #09090b;
   --color-fd-foreground: #fafafa;
-  --color-fd-muted: rgba(255, 255, 255, 0.05);
-  --color-fd-muted-foreground: #a1a1aa;
+  --color-fd-muted: rgba(255, 255, 255, 0.06);
+  --color-fd-muted-foreground: #b4b4bc;
   --color-fd-popover: #18181b;
   --color-fd-popover-foreground: #fafafa;
   --color-fd-card: rgba(255, 255, 255, 0.03);
@@ -57,8 +57,8 @@
   --fwt-background: #09090b;
   --fwt-foreground: #fafafa;
   --fwt-primary: #818cf8;
-  --fwt-muted: #a1a1aa;
-  --fwt-border: rgba(255, 255, 255, 0.1);
+  --fwt-muted: #b4b4bc;
+  --fwt-border: rgba(255, 255, 255, 0.12);
   --fwt-sidebar-active: #818cf8;
   --fwt-sidebar-active-bg: rgba(129, 140, 248, 0.15);
   --fwt-code-bg: rgba(255, 255, 255, 0.03);
