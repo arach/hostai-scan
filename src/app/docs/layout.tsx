@@ -3,7 +3,6 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import type { ReactNode } from 'react';
 import { docsSource } from '@/lib/docs-source';
 import { HostAILogo } from '@/components/docs-logo';
-import 'fumadocs-ui/style.css';
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (

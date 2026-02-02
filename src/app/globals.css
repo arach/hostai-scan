@@ -1,7 +1,18 @@
 @import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 /* HostAI Theme - Light Mode (Default) */
 :root {
+  /* Fumadocs theme variables */
+  --color-fd-primary: #5753c6;
+  --color-fd-primary-foreground: #fff;
+  --color-fd-background: #fcfdfd;
+  --color-fd-muted: #f0f2f3;
+  --color-fd-muted-foreground: #61686b;
+  --color-fd-foreground: #001821;
+  --color-fd-border: #e0e4e6;
+
   /* Base colors - Light */
   --background: hsl(210 20% 98%);
   --foreground: hsl(222 47% 11%);
@@ -53,6 +64,13 @@
 
 /* HostAI Theme - Dark Mode */
 .dark {
+  /* Fumadocs dark theme variables */
+  --color-fd-background: #001821;
+  --color-fd-muted: #122831;
+  --color-fd-muted-foreground: #afb7b9;
+  --color-fd-foreground: #edefef;
+  --color-fd-border: #2c4047;
+
   /* Base colors - Dark */
   --background: hsl(222 47% 6%);
   --foreground: hsl(210 40% 96%);
