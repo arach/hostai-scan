@@ -1,5 +1,8 @@
 /**
  * Transform AuditResult into BigQuery-compatible row objects
+ *
+ * Category names are matched case-insensitively. Expected values:
+ * - "Performance", "SEO", "Conversion", "Trust", "Content"
  */
 
 import type { AuditResult, AuditCategory, AuditRecommendation } from "@/types/audit";
@@ -21,11 +24,13 @@ export interface AuditRow {
   trust_score: number | null;
   content_score: number | null;
 
-  // Core Web Vitals
+  // Core Web Vitals (FID deprecated March 2024, INP is successor)
   lcp_ms: number | null;
   lcp_category: string | null;
-  fid_ms: number | null;
+  fid_ms: number | null; // deprecated, kept for historical data
   fid_category: string | null;
+  inp_ms: number | null; // Interaction to Next Paint (replaces FID)
+  inp_category: string | null;
   cls_score: number | null;
   cls_category: string | null;
   fcp_ms: number | null;
@@ -147,6 +152,8 @@ function transformAuditRow(
     lcp_category: coreWebVitals?.LARGEST_CONTENTFUL_PAINT_MS?.category ?? null,
     fid_ms: coreWebVitals?.FIRST_INPUT_DELAY_MS?.percentile ?? null,
     fid_category: coreWebVitals?.FIRST_INPUT_DELAY_MS?.category ?? null,
+    inp_ms: (coreWebVitals as Record<string, { percentile?: number; category?: string } | undefined>)?.INTERACTION_TO_NEXT_PAINT_MS?.percentile ?? null,
+    inp_category: (coreWebVitals as Record<string, { percentile?: number; category?: string } | undefined>)?.INTERACTION_TO_NEXT_PAINT_MS?.category ?? null,
     cls_score: coreWebVitals?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.percentile ?? null,
     cls_category: coreWebVitals?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.category ?? null,
     fcp_ms: coreWebVitals?.FIRST_CONTENTFUL_PAINT_MS?.percentile ?? null,

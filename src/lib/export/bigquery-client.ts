@@ -132,7 +132,9 @@ export class BigQueryExporter {
   async exportAudit(audit: AuditResult): Promise<ExportResult> {
     await this.initialize();
 
-    const auditId = audit.auditId || `${audit.domain}-${Date.now()}`;
+    const rows = transformAuditToBigQueryRows(audit);
+    // Use the auditId from the transformed rows to ensure consistency
+    const auditId = rows.audit.audit_id;
 
     const result: ExportResult = {
       success: true,
@@ -146,7 +148,6 @@ export class BigQueryExporter {
     };
 
     try {
-      const rows = transformAuditToBigQueryRows(audit);
       await this.insertRows(rows, result);
     } catch (error) {
       result.success = false;

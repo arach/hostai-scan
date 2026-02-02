@@ -28,11 +28,13 @@ export const auditsSchema: TableSchema = {
     { name: "trust_score", type: "INT64", mode: "NULLABLE" },
     { name: "content_score", type: "INT64", mode: "NULLABLE" },
 
-    // Core Web Vitals
+    // Core Web Vitals (FID deprecated March 2024, INP is successor)
     { name: "lcp_ms", type: "INT64", mode: "NULLABLE" },
     { name: "lcp_category", type: "STRING", mode: "NULLABLE" },
-    { name: "fid_ms", type: "INT64", mode: "NULLABLE" },
+    { name: "fid_ms", type: "INT64", mode: "NULLABLE" }, // deprecated
     { name: "fid_category", type: "STRING", mode: "NULLABLE" },
+    { name: "inp_ms", type: "INT64", mode: "NULLABLE" }, // Interaction to Next Paint
+    { name: "inp_category", type: "STRING", mode: "NULLABLE" },
     { name: "cls_score", type: "FLOAT64", mode: "NULLABLE" },
     { name: "cls_category", type: "STRING", mode: "NULLABLE" },
     { name: "fcp_ms", type: "INT64", mode: "NULLABLE" },
