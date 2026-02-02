@@ -1,66 +1,135 @@
 /**
  * HostAI Color Preset
- * Purple brand theme (#5753c6)
+ *
+ * A refined, dev-centric color palette.
+ * Primary: HostAI purple (#5753c6)
+ * Aesthetic: Clean, minimal, high contrast for readability
  */
 
 :root {
-  /* Fumadocs variables */
-  --color-fd-background: #fafafa;
-  --color-fd-foreground: #18181b;
-  --color-fd-muted: rgba(0, 0, 0, 0.04);
-  --color-fd-muted-foreground: #71717a;
+  /* ═══════════════════════════════════════════════════════════════════════
+     LIGHT MODE
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Fumadocs Core Variables */
+  --color-fd-background: #ffffff;
+  --color-fd-foreground: #0f172a;
+  --color-fd-muted: #f1f5f9;
+  --color-fd-muted-foreground: #64748b;
   --color-fd-popover: #ffffff;
-  --color-fd-popover-foreground: #18181b;
-  --color-fd-card: rgba(255, 255, 255, 0.8);
-  --color-fd-card-foreground: #18181b;
-  --color-fd-border: rgba(0, 0, 0, 0.1);
+  --color-fd-popover-foreground: #0f172a;
+  --color-fd-card: #ffffff;
+  --color-fd-card-foreground: #0f172a;
+  --color-fd-border: #e2e8f0;
   --color-fd-primary: #5753c6;
   --color-fd-primary-foreground: #ffffff;
-  --color-fd-secondary: rgba(0, 0, 0, 0.04);
-  --color-fd-secondary-foreground: #18181b;
-  --color-fd-accent: rgba(87, 83, 198, 0.1);
+  --color-fd-secondary: #f1f5f9;
+  --color-fd-secondary-foreground: #0f172a;
+  --color-fd-accent: #f1f5f9;
   --color-fd-accent-foreground: #5753c6;
   --color-fd-ring: #5753c6;
 
-  /* Theme tokens */
-  --fwt-background: #fafafa;
-  --fwt-foreground: #18181b;
+  /* Theme Semantic Tokens */
+  --fwt-background: #ffffff;
+  --fwt-background-subtle: #f8fafc;
+  --fwt-foreground: #0f172a;
+  --fwt-foreground-muted: #64748b;
   --fwt-primary: #5753c6;
-  --fwt-muted: #71717a;
-  --fwt-border: rgba(0, 0, 0, 0.1);
-  --fwt-sidebar-active: #5753c6;
-  --fwt-sidebar-active-bg: rgba(87, 83, 198, 0.1);
-  --fwt-code-bg: rgba(0, 0, 0, 0.03);
-  --fwt-code-border: rgba(0, 0, 0, 0.08);
+  --fwt-primary-hover: #4845a3;
+  --fwt-border: #e2e8f0;
+  --fwt-border-subtle: #f1f5f9;
+
+  /* Sidebar */
+  --fwt-sidebar-bg: #f8fafc;
+  --fwt-sidebar-border: #e2e8f0;
+  --fwt-sidebar-text: #64748b;
+  --fwt-sidebar-text-hover: #0f172a;
+  --fwt-sidebar-active-text: #5753c6;
+  --fwt-sidebar-active-bg: rgba(87, 83, 198, 0.08);
+  --fwt-sidebar-hover-bg: #f1f5f9;
+
+  /* Code */
+  --fwt-code-bg: #f8fafc;
+  --fwt-code-border: #e2e8f0;
+  --fwt-code-text: #0f172a;
+  --fwt-code-comment: #64748b;
+  --fwt-code-keyword: #5753c6;
+  --fwt-code-string: #059669;
+  --fwt-code-function: #2563eb;
+
+  /* Table */
+  --fwt-table-bg: #ffffff;
+  --fwt-table-header-bg: #f8fafc;
+  --fwt-table-border: #e2e8f0;
+  --fwt-table-row-hover: #f8fafc;
+
+  /* TOC */
+  --fwt-toc-text: #64748b;
+  --fwt-toc-text-hover: #0f172a;
+  --fwt-toc-active: #5753c6;
+  --fwt-toc-border: #e2e8f0;
 }
 
 .dark {
-  /* Fumadocs variables */
-  --color-fd-background: #09090b;
-  --color-fd-foreground: #fafafa;
-  --color-fd-muted: rgba(255, 255, 255, 0.06);
-  --color-fd-muted-foreground: #b4b4bc;
-  --color-fd-popover: #18181b;
-  --color-fd-popover-foreground: #fafafa;
-  --color-fd-card: rgba(255, 255, 255, 0.03);
-  --color-fd-card-foreground: #fafafa;
-  --color-fd-border: rgba(255, 255, 255, 0.1);
+  /* ═══════════════════════════════════════════════════════════════════════
+     DARK MODE
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Fumadocs Core Variables */
+  --color-fd-background: #0c0c0f;
+  --color-fd-foreground: #f1f5f9;
+  --color-fd-muted: #1e1e24;
+  --color-fd-muted-foreground: #94a3b8;
+  --color-fd-popover: #18181c;
+  --color-fd-popover-foreground: #f1f5f9;
+  --color-fd-card: #18181c;
+  --color-fd-card-foreground: #f1f5f9;
+  --color-fd-border: #27272e;
   --color-fd-primary: #818cf8;
-  --color-fd-primary-foreground: #09090b;
-  --color-fd-secondary: rgba(255, 255, 255, 0.05);
-  --color-fd-secondary-foreground: #fafafa;
-  --color-fd-accent: rgba(129, 140, 248, 0.15);
+  --color-fd-primary-foreground: #0c0c0f;
+  --color-fd-secondary: #1e1e24;
+  --color-fd-secondary-foreground: #f1f5f9;
+  --color-fd-accent: #1e1e24;
   --color-fd-accent-foreground: #818cf8;
   --color-fd-ring: #818cf8;
 
-  /* Theme tokens */
-  --fwt-background: #09090b;
-  --fwt-foreground: #fafafa;
+  /* Theme Semantic Tokens */
+  --fwt-background: #0c0c0f;
+  --fwt-background-subtle: #111114;
+  --fwt-foreground: #f1f5f9;
+  --fwt-foreground-muted: #94a3b8;
   --fwt-primary: #818cf8;
-  --fwt-muted: #b4b4bc;
-  --fwt-border: rgba(255, 255, 255, 0.12);
-  --fwt-sidebar-active: #818cf8;
-  --fwt-sidebar-active-bg: rgba(129, 140, 248, 0.15);
-  --fwt-code-bg: rgba(255, 255, 255, 0.03);
-  --fwt-code-border: rgba(255, 255, 255, 0.08);
+  --fwt-primary-hover: #a5b4fc;
+  --fwt-border: #27272e;
+  --fwt-border-subtle: #1e1e24;
+
+  /* Sidebar */
+  --fwt-sidebar-bg: #0c0c0f;
+  --fwt-sidebar-border: #27272e;
+  --fwt-sidebar-text: #94a3b8;
+  --fwt-sidebar-text-hover: #f1f5f9;
+  --fwt-sidebar-active-text: #818cf8;
+  --fwt-sidebar-active-bg: rgba(129, 140, 248, 0.1);
+  --fwt-sidebar-hover-bg: #1e1e24;
+
+  /* Code */
+  --fwt-code-bg: #111114;
+  --fwt-code-border: #27272e;
+  --fwt-code-text: #e2e8f0;
+  --fwt-code-comment: #64748b;
+  --fwt-code-keyword: #a5b4fc;
+  --fwt-code-string: #34d399;
+  --fwt-code-function: #60a5fa;
+
+  /* Table */
+  --fwt-table-bg: #0c0c0f;
+  --fwt-table-header-bg: #111114;
+  --fwt-table-border: #27272e;
+  --fwt-table-row-hover: #18181c;
+
+  /* TOC */
+  --fwt-toc-text: #94a3b8;
+  --fwt-toc-text-hover: #f1f5f9;
+  --fwt-toc-active: #818cf8;
+  --fwt-toc-border: #27272e;
 }
