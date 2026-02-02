@@ -22,9 +22,10 @@ const jetbrainsMono = JetBrains_Mono({
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <RootProvider theme={{ attribute: 'class', defaultTheme: 'system', enableSystem: true }}>
-      <div className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <div className={`${inter.variable} ${jetbrainsMono.variable}`} style={{ margin: 0, padding: 0 }}>
         <DocsLayout
           tree={docsSource.pageTree}
+          containerProps={{ style: { padding: 0, margin: 0 } }}
           nav={{
             title: (
               <div className="flex items-center gap-2">
