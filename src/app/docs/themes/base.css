@@ -26,6 +26,17 @@ body {
 
 #nd-docs-layout {
   background: var(--fwt-background);
+  padding: 0 !important;
+}
+
+/* Fix sidebar footer cutoff */
+#nd-sidebar {
+  padding-bottom: 60px !important;
+}
+
+/* Dark mode borders */
+.dark * {
+  border-color: var(--fwt-border) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
