@@ -18,6 +18,7 @@ import {
   Users,
   Table,
   LayoutList,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -319,6 +320,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             >
               <Users className="size-4" />
               Leads
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.href = "/admin/plans"}
+            >
+              <FileText className="size-4" />
+              Plans
             </Button>
             <Button
               variant="default"
